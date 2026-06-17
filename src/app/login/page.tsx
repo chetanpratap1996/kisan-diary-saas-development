@@ -2,30 +2,22 @@
 
 import { FormEvent, useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { AlertCircle, Phone, Lock, Eye, EyeOff, Loader2, CheckCircle2, Wheat, ShieldCheck, ArrowRight } from "lucide-react";
+import { AlertCircle, Phone, Lock, Eye, EyeOff, Loader2, CheckCircle2, Wheat, ShieldCheck, ArrowRight, MessageCircle, KeyRound, Fingerprint, ScanFace } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 
 // ─── Client-side phone validation (mirrors server-side) ───────────────────────
 function validatePhone(phone: string): string | null {
-  if (phone.length === 0) return null; // no error when empty
+  if (phone.length === 0) return null;
   if (!/^\d+$/.test(phone)) return "केवल अंक दर्ज करें";
-  if (phone.length < 10) return null; // still typing
+  if (phone.length < 10) return null;
   if (!/^[6-9]/.test(phone)) return "नंबर 6, 7, 8 या 9 से शुरू होना चाहिए";
 
   const digits = phone.split("").map(Number);
-
-  // All same digit
   if (new Set(digits).size === 1) return "यह नंबर अमान्य है";
-
-  // Any digit ≥7 times
   for (let d = 0; d <= 9; d++) {
     if (digits.filter((x) => x === d).length >= 7) return "यह नंबर अमान्य है";
   }
-
-  // 5+ consecutive equal digits
   if (/(\d)\1{4,}/.test(phone)) return "यह नंबर अमान्य है";
-
-  // Sequential ascending/descending (7+ pairs)
   let asc = 0, desc = 0;
   for (let i = 0; i < 9; i++) {
     const diff = digits[i + 1] - digits[i];
@@ -33,23 +25,18 @@ function validatePhone(phone: string): string | null {
     desc = (diff === -1 || diff === 9) ? desc + 1 : 0;
     if (asc >= 7 || desc >= 7) return "यह नंबर अमान्य है";
   }
-
-  // Mirrored halves e.g. 1234512345
   if (phone.slice(0, 5) === phone.slice(5)) return "यह नंबर अमान्य है";
-
-  // Repeating 2-digit block e.g. 9090909090
   if (/^(\d{2})\1{4}$/.test(phone)) return "यह नंबर अमान्य है";
-
-  // Hard block-list
   const blocked = new Set([
     "9876543210","8765432109","7654321098","6543210987",
     "9012345678","8901234567","7890123456","6789012345",
     "9999900000","9000000000","8000000000","7000000000","6000000000",
   ]);
   if (blocked.has(phone)) return "यह नंबर अमान्य है";
-
-  return null; // ✓ valid
+  return null;
 }
+
+type ForgotMode = 'none' | 'phone' | 'otp' | 'new-pin';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -61,19 +48,45 @@ export default function LoginPage() {
   const [showPin, setShowPin] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [successMsg, setSuccessMsg] = useState("");
   const [phoneError, setPhoneError] = useState<string | null>(null);
+
+  // Forgot PIN state
+  const [forgotMode, setForgotMode] = useState<ForgotMode>('none');
+  const [otp, setOtp] = useState("");
+  const [newPin, setNewPin] = useState("");
+  const [showNewPin, setShowNewPin] = useState(false);
+
+  // Biometric state
+  const [isBiometricSupported, setIsBiometricSupported] = useState(false);
+  const [showBiometricPrompt, setShowBiometricPrompt] = useState(false);
+  const [registeredPhone, setRegisteredPhone] = useState("");
+  const [userDataForBio, setUserDataForBio] = useState<any>(null);
+  const [userTokenForBio, setUserTokenForBio] = useState<string>("");
+
+  useEffect(() => {
+    // Check if device supports Fingerprint/FaceID via WebAuthn
+    if (window.PublicKeyCredential) {
+      PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable()
+        .then((available) => {
+          setIsBiometricSupported(available);
+        })
+        .catch(console.error);
+    }
+  }, []);
 
   // Redirect if already logged in
   useEffect(() => {
-    if (!isLoading && user) {
+    if (!isLoading && user && !showBiometricPrompt) {
       router.replace(user.isAdmin ? "/admin/dashboard" : "/app/home");
     }
-  }, [isLoading, router, user]);
+  }, [isLoading, router, user, showBiometricPrompt]);
 
   const handlePhoneChange = useCallback((raw: string) => {
     const cleaned = raw.replace(/\D/g, "").slice(0, 10);
     setPhone(cleaned);
     setError("");
+    setSuccessMsg("");
     if (cleaned.length === 10) {
       setPhoneError(validatePhone(cleaned));
     } else {
@@ -84,13 +97,26 @@ export default function LoginPage() {
   const handlePinChange = useCallback((raw: string) => {
     setPin(raw.replace(/\D/g, "").slice(0, 6));
     setError("");
+    setSuccessMsg("");
+  }, []);
+  
+  const handleOtpChange = useCallback((raw: string) => {
+    setOtp(raw.replace(/\D/g, "").slice(0, 6));
+    setError("");
+  }, []);
+
+  const handleNewPinChange = useCallback((raw: string) => {
+    setNewPin(raw.replace(/\D/g, "").slice(0, 6));
+    setError("");
   }, []);
 
   const phoneValid = phone.length === 10 && phoneError === null;
 
-  const handleSubmit = async (e: FormEvent) => {
+  // ─── Normal Login Submit ─────────────────────────────────────────
+  const handleLoginSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError("");
+    setSuccessMsg("");
 
     const err = validatePhone(phone);
     if (err || phone.length !== 10) {
@@ -115,10 +141,173 @@ export default function LoginPage() {
         throw new Error(data.message || "लॉगिन विफल रहा।");
       }
 
-      login(data.data.token, data.data.user);
-      router.push(data.data.user.isAdmin ? "/admin/dashboard" : "/app/home");
+      // Check if we should prompt for biometric registration
+      const hasBioRegisteredForPhone = localStorage.getItem('kisan_bio_phone') === phone;
+      if (isBiometricSupported && !hasBioRegisteredForPhone) {
+        setRegisteredPhone(phone);
+        setUserDataForBio(data.data.user);
+        setUserTokenForBio(data.data.token);
+        setShowBiometricPrompt(true);
+      } else {
+        login(data.data.token, data.data.user);
+        router.push(data.data.user.isAdmin ? "/admin/dashboard" : "/app/home");
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "लॉगिन विफल रहा।");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  // ─── Biometric Registration ─────────────────────────────────────────
+  const handleEnableBiometric = async () => {
+    setBusy(true);
+    try {
+      const challenge = new Uint8Array(32);
+      crypto.getRandomValues(challenge);
+      const cred = await navigator.credentials.create({
+        publicKey: {
+          challenge,
+          rp: { name: "Kisan Diary" },
+          user: {
+            id: new TextEncoder().encode(registeredPhone),
+            name: registeredPhone,
+            displayName: "Kisan Farmer"
+          },
+          pubKeyCredParams: [
+            { type: "public-key", alg: -7 },
+            { type: "public-key", alg: -257 }
+          ],
+          authenticatorSelection: {
+            authenticatorAttachment: "platform",
+            userVerification: "required"
+          }
+        }
+      });
+      if (cred) {
+        localStorage.setItem('kisan_bio_phone', registeredPhone);
+      }
+    } catch (e: any) {
+      if (e.name !== 'NotAllowedError') {
+        console.error("Biometric registration failed", e);
+        alert("फिंगरप्रिंट सेटअप विफल रहा। कृपया सुनिश्चित करें कि आपके डिवाइस में लॉक/फिंगरप्रिंट सक्षम है।");
+      }
+      // If NotAllowedError, user cancelled or no authenticator is setup. Just proceed to login.
+    } finally {
+      login(userTokenForBio, userDataForBio);
+      router.push(userDataForBio?.isAdmin ? "/admin/dashboard" : "/app/home");
+    }
+  };
+
+  const handleSkipBiometric = () => {
+    login(userTokenForBio, userDataForBio);
+    router.push(userDataForBio?.isAdmin ? "/admin/dashboard" : "/app/home");
+  };
+
+  // ─── Biometric Login ─────────────────────────────────────────
+  const handleBiometricLogin = async () => {
+    setBusy(true);
+    setError("");
+    try {
+      const savedPhone = localStorage.getItem('kisan_bio_phone');
+      if (!savedPhone) {
+        throw new Error("फिंगरप्रिंट सेट नहीं है। कृपया पहले PIN से लॉगिन करें।");
+      }
+
+      const challenge = new Uint8Array(32);
+      crypto.getRandomValues(challenge);
+      
+      const assertion = await navigator.credentials.get({
+        publicKey: {
+          challenge,
+          userVerification: "required"
+        }
+      });
+
+      if (assertion) {
+        // Authenticate with backend
+        const res = await fetch("/api/auth/biometric-login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ phone: savedPhone }),
+        });
+        const data = await res.json();
+        
+        if (!res.ok || !data.success) {
+          throw new Error(data.message || "फिंगरप्रिंट लॉगिन विफल रहा।");
+        }
+        
+        login(data.data.token, data.data.user);
+        router.push(data.data.user.isAdmin ? "/admin/dashboard" : "/app/home");
+      }
+    } catch (err: any) {
+      if (err.name !== 'NotAllowedError') {
+         setError(err instanceof Error ? err.message : "फिंगरप्रिंट लॉगिन रद्द कर दिया गया या विफल रहा।");
+      }
+    } finally {
+      setBusy(false);
+    }
+  };
+
+
+  // ─── Forgot PIN Flows ─────────────────────────────────────────
+  const handleSendOtp = async (e: FormEvent) => {
+    e.preventDefault();
+    setError("");
+    const err = validatePhone(phone);
+    if (err || phone.length !== 10) {
+      setPhoneError(err ?? "10 अंकों का मोबाइल नंबर दर्ज करें");
+      return;
+    }
+    setBusy(true);
+    setTimeout(() => {
+      setBusy(false);
+      setForgotMode('otp');
+    }, 800);
+  };
+
+  const handleVerifyOtp = async (e: FormEvent) => {
+    e.preventDefault();
+    setError("");
+    if (otp.length !== 6) {
+      setError("6 अंकों का OTP दर्ज करें");
+      return;
+    }
+    if (otp !== "123456") {
+      setError("OTP गलत है। फिर से प्रयास करें। (टेस्ट OTP: 123456)");
+      return;
+    }
+    setForgotMode('new-pin');
+  };
+
+  const handleSetNewPin = async (e: FormEvent) => {
+    e.preventDefault();
+    setError("");
+    if (newPin.length < 4) {
+      setError("नया PIN कम से कम 4 अंकों का होना चाहिए");
+      return;
+    }
+
+    setBusy(true);
+    try {
+      const res = await fetch("/api/auth/reset-pin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone, otp, newPin }),
+      });
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        throw new Error(data.message || "PIN रीसेट विफल रहा।");
+      }
+
+      setSuccessMsg("आपका PIN सफलतापूर्वक रीसेट हो गया है! अब नए PIN से लॉगिन करें।");
+      setForgotMode('none');
+      setPin(newPin);
+      setNewPin("");
+      setOtp("");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "PIN रीसेट विफल रहा।");
     } finally {
       setBusy(false);
     }
@@ -129,6 +318,44 @@ export default function LoginPage() {
       <div style={{ minHeight: "100vh", background: "#071209", display: "flex", alignItems: "center", justifyContent: "center" }}>
         <Loader2 style={{ width: 32, height: 32, color: "#4ade80", animation: "spin 1s linear infinite" }} />
       </div>
+    );
+  }
+
+  // ─── Render Biometric Prompt ─────────────────────────────────────────
+  if (showBiometricPrompt) {
+    return (
+      <main className="lp-bg">
+        <div className="lp-center">
+          <div className="lp-card auth-scale-in text-center flex flex-col items-center">
+            <div className="w-16 h-16 bg-emerald-500/20 rounded-full flex items-center justify-center mb-6 text-emerald-400">
+              <Fingerprint className="w-8 h-8" />
+            </div>
+            <h1 className="text-2xl font-bold text-white mb-3">त्वरित लॉगिन</h1>
+            <p className="text-slate-300 text-sm mb-8">क्या आप अगली बार से फिंगरप्रिंट या फेस आईडी के साथ तेजी से लॉगिन करना चाहते हैं?</p>
+            
+            <button 
+              onClick={handleEnableBiometric}
+              disabled={busy}
+              className="lp-btn mb-4 w-full"
+            >
+              हाँ, फिंगरप्रिंट सक्षम करें
+            </button>
+            <button 
+              onClick={handleSkipBiometric}
+              disabled={busy}
+              className="text-slate-400 hover:text-white font-medium"
+            >
+              नहीं, धन्यवाद
+            </button>
+          </div>
+        </div>
+        <style>{`
+          .lp-bg { min-height: 100vh; background: #071209; display: flex; align-items: center; justify-content: center; }
+          .lp-center { width: 100%; max-width: 420px; padding: 24px; }
+          .lp-card { background: rgba(255,255,255,0.025); border: 1px solid rgba(255,255,255,0.08); border-radius: 28px; padding: 36px 32px; backdrop-filter: blur(28px); }
+          .lp-btn { height: 52px; width: 100%; border: none; border-radius: 14px; font-weight: 700; color: #fff; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); }
+        `}</style>
+      </main>
     );
   }
 
@@ -153,127 +380,331 @@ export default function LoginPage() {
 
           {/* ── Greeting ────────────────────────────── */}
           <div className="lp-greet">
-            <h1 className="lp-title flex items-center gap-2.5">
-              नमस्ते
-              <Wheat className="w-7 h-7 text-amber-400" strokeWidth={1.5} />
-            </h1>
-            <p className="lp-sub">मोबाइल नंबर और PIN से जारी रखें</p>
+            {forgotMode === 'none' && (
+              <>
+                <h1 className="lp-title flex items-center gap-2.5">
+                  नमस्ते
+                  <Wheat className="w-7 h-7 text-amber-400" strokeWidth={1.5} />
+                </h1>
+                <p className="lp-sub">मोबाइल नंबर और PIN से जारी रखें</p>
+              </>
+            )}
+            {forgotMode === 'phone' && (
+              <>
+                <h1 className="lp-title flex items-center gap-2.5 text-[24px]">
+                  PIN रीसेट करें
+                </h1>
+                <p className="lp-sub">अपना पंजीकृत मोबाइल नंबर दर्ज करें</p>
+              </>
+            )}
+            {forgotMode === 'otp' && (
+              <>
+                <h1 className="lp-title flex items-center gap-2.5 text-[24px]">
+                  OTP सत्यापित करें
+                </h1>
+                <p className="lp-sub">हमने {phone} पर एक OTP भेजा है</p>
+              </>
+            )}
+            {forgotMode === 'new-pin' && (
+              <>
+                <h1 className="lp-title flex items-center gap-2.5 text-[24px]">
+                  नया PIN बनाएं
+                </h1>
+                <p className="lp-sub">अपने खाते के लिए एक नया 4-6 अंकों का PIN सेट करें</p>
+              </>
+            )}
           </div>
 
-          {/* ── Form ────────────────────────────────── */}
-          <form onSubmit={handleSubmit} noValidate className="lp-form">
+          {successMsg && (
+            <div className="lp-success mb-5 auth-slide-down" role="alert">
+              <CheckCircle2 className="lp-success-icon" aria-hidden />
+              <span>{successMsg}</span>
+            </div>
+          )}
 
-            {/* Mobile */}
-            <div className="lp-field">
-              <label className="lp-label" htmlFor="lp-phone">मोबाइल नंबर</label>
-              <div className={`lp-input-row ${phoneError ? "lp-input-row--err" : phoneValid ? "lp-input-row--ok" : ""}`}>
-                <Phone className="lp-icon" aria-hidden />
-                <span className="lp-prefix">+91</span>
-                <input
-                  id="lp-phone"
-                  type="tel"
-                  inputMode="numeric"
-                  autoComplete="tel"
-                  placeholder="9876543210"
-                  value={phone}
-                  onChange={(e) => handlePhoneChange(e.target.value)}
-                  className="lp-input lp-input--phone"
-                  disabled={busy}
-                  maxLength={10}
-                  aria-describedby={phoneError ? "lp-phone-err" : undefined}
-                />
-                {phoneValid && (
-                  <CheckCircle2 className="lp-ok-icon" aria-label="Valid number" />
+          {/* ── Normal Login Form ────────────────────────────────── */}
+          {forgotMode === 'none' && (
+            <form onSubmit={handleLoginSubmit} noValidate className="lp-form">
+              {/* Mobile */}
+              <div className="lp-field">
+                <label className="lp-label" htmlFor="lp-phone">मोबाइल नंबर</label>
+                <div className={`lp-input-row ${phoneError ? "lp-input-row--err" : phoneValid ? "lp-input-row--ok" : ""}`}>
+                  <Phone className="lp-icon" aria-hidden />
+                  <span className="lp-prefix">+91</span>
+                  <input
+                    id="lp-phone"
+                    type="tel"
+                    inputMode="numeric"
+                    autoComplete="tel"
+                    placeholder="9876543210"
+                    value={phone}
+                    onChange={(e) => handlePhoneChange(e.target.value)}
+                    className="lp-input lp-input--phone"
+                    disabled={busy}
+                    maxLength={10}
+                    aria-describedby={phoneError ? "lp-phone-err" : undefined}
+                  />
+                  {phoneValid && (
+                    <CheckCircle2 className="lp-ok-icon" aria-label="Valid number" />
+                  )}
+                </div>
+                {phoneError && (
+                  <p id="lp-phone-err" className="lp-field-err auth-slide-down">
+                    <AlertCircle className="lp-field-err-icon" aria-hidden />
+                    {phoneError}
+                  </p>
                 )}
               </div>
-              {phoneError && (
-                <p id="lp-phone-err" className="lp-field-err auth-slide-down">
-                  <AlertCircle className="lp-field-err-icon" aria-hidden />
-                  {phoneError}
-                </p>
-              )}
-            </div>
 
-            {/* Name */}
-            <div className="lp-field">
-              <label className="lp-label" htmlFor="lp-name">आपका नाम (वैकल्पिक)</label>
-              <div className="lp-input-row">
-                <input
-                  id="lp-name"
-                  type="text"
-                  autoComplete="name"
-                  placeholder="उदा. रामलाल"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="lp-input"
-                  style={{ paddingLeft: '20px' }}
-                  disabled={busy}
-                />
+              {/* Name */}
+              <div className="lp-field">
+                <label className="lp-label" htmlFor="lp-name">आपका नाम (वैकल्पिक)</label>
+                <div className="lp-input-row">
+                  <input
+                    id="lp-name"
+                    type="text"
+                    autoComplete="name"
+                    placeholder="उदा. रामलाल"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className="lp-input"
+                    style={{ paddingLeft: '20px' }}
+                    disabled={busy}
+                  />
+                </div>
               </div>
-            </div>
 
-            {/* PIN */}
-            <div className="lp-field">
-              <label className="lp-label" htmlFor="lp-pin">PIN</label>
-              <div className="lp-input-row">
-                <Lock className="lp-icon" aria-hidden />
-                <input
-                  id="lp-pin"
-                  type={showPin ? "text" : "password"}
-                  inputMode="numeric"
-                  autoComplete="current-password"
-                  placeholder="• • • • • •"
-                  value={pin}
-                  onChange={(e) => handlePinChange(e.target.value)}
-                  className="lp-input lp-input--pin"
-                  disabled={busy}
-                  maxLength={6}
-                />
+              {/* PIN */}
+              <div className="lp-field">
+                <label className="lp-label" htmlFor="lp-pin">PIN</label>
+                <div className="lp-input-row">
+                  <Lock className="lp-icon" aria-hidden />
+                  <input
+                    id="lp-pin"
+                    type={showPin ? "text" : "password"}
+                    inputMode="numeric"
+                    autoComplete="current-password"
+                    placeholder="• • • • • •"
+                    value={pin}
+                    onChange={(e) => handlePinChange(e.target.value)}
+                    className="lp-input lp-input--pin"
+                    disabled={busy}
+                    maxLength={6}
+                  />
+                  <button
+                    type="button"
+                    className="lp-eye"
+                    onClick={() => setShowPin((v) => !v)}
+                    tabIndex={-1}
+                    aria-label={showPin ? "PIN छुपाएं" : "PIN दिखाएं"}
+                  >
+                    {showPin ? <EyeOff className="lp-eye-icon" /> : <Eye className="lp-eye-icon" />}
+                  </button>
+                </div>
+                <p className="lp-hint">नया उपयोगकर्ता? कोई भी PIN चुनें — खाता अपने आप बन जाएगा।</p>
+              </div>
+
+              {/* Submit error */}
+              {error && (
+                <div className="lp-error auth-slide-down" role="alert">
+                  <AlertCircle className="lp-error-icon" aria-hidden />
+                  <span>{error}</span>
+                </div>
+              )}
+
+              {/* Submit Button & Biometric Button */}
+              <div className="flex gap-3 mt-2">
                 <button
-                  type="button"
-                  className="lp-eye"
-                  onClick={() => setShowPin((v) => !v)}
-                  tabIndex={-1}
-                  aria-label={showPin ? "PIN छुपाएं" : "PIN दिखाएं"}
+                  type="submit"
+                  disabled={busy || !!phoneError || phone.length < 10}
+                  className="lp-btn flex-1"
                 >
-                  {showPin ? <EyeOff className="lp-eye-icon" /> : <Eye className="lp-eye-icon" />}
+                  {busy ? (
+                    <>
+                      <Loader2 className="lp-btn-spin" aria-hidden />
+                      <span>जारी है…</span>
+                    </>
+                  ) : (
+                    <span className="flex items-center gap-2">
+                      जारी करें
+                      <ArrowRight className="w-4 h-4" strokeWidth={2.5} />
+                    </span>
+                  )}
                 </button>
+                
+                {isBiometricSupported && (
+                  <button
+                    type="button"
+                    onClick={handleBiometricLogin}
+                    disabled={busy}
+                    aria-label="फिंगरप्रिंट से लॉगिन करें"
+                    className="flex items-center justify-center bg-emerald-900/30 border border-emerald-500/20 hover:border-emerald-500/50 w-14 rounded-xl text-emerald-400 hover:bg-emerald-800/40 transition-all h-[52px]"
+                  >
+                    <Fingerprint className="w-6 h-6" />
+                  </button>
+                )}
               </div>
-              <p className="lp-hint">नया उपयोगकर्ता? कोई भी PIN चुनें — खाता अपने आप बन जाएगा।</p>
-            </div>
 
-            {/* Submit error */}
-            {error && (
-              <div className="lp-error auth-slide-down" role="alert">
-                <AlertCircle className="lp-error-icon" aria-hidden />
-                <span>{error}</span>
+              {/* Highly visible Forgot PIN button */}
+              <button 
+                type="button" 
+                onClick={() => { setForgotMode('phone'); setError(""); setSuccessMsg(""); }}
+                className="mt-4 text-[14px] font-bold text-emerald-400 hover:text-emerald-300 transition-colors w-full text-center"
+              >
+                PIN भूल गए? (Forgot PIN)
+              </button>
+            </form>
+          )}
+
+          {/* ── Forgot PIN: Enter Phone ────────────────────────────────── */}
+          {forgotMode === 'phone' && (
+            <form onSubmit={handleSendOtp} noValidate className="lp-form">
+              <div className="lp-field">
+                <label className="lp-label" htmlFor="lp-phone-forgot">मोबाइल नंबर</label>
+                <div className={`lp-input-row ${phoneError ? "lp-input-row--err" : phoneValid ? "lp-input-row--ok" : ""}`}>
+                  <Phone className="lp-icon" aria-hidden />
+                  <span className="lp-prefix">+91</span>
+                  <input
+                    id="lp-phone-forgot"
+                    type="tel"
+                    inputMode="numeric"
+                    placeholder="9876543210"
+                    value={phone}
+                    onChange={(e) => handlePhoneChange(e.target.value)}
+                    className="lp-input lp-input--phone"
+                    disabled={busy}
+                    maxLength={10}
+                  />
+                </div>
               </div>
-            )}
-
-            {/* Submit */}
-            <button
-              type="submit"
-              disabled={busy || !!phoneError || phone.length < 10}
-              className="lp-btn"
-            >
-              {busy ? (
-                <>
-                  <Loader2 className="lp-btn-spin" aria-hidden />
-                  <span>जारी है…</span>
-                </>
-              ) : (
-                <span className="flex items-center gap-2">
-                  जारी करें
-                  <ArrowRight className="w-4 h-4" strokeWidth={2.5} />
-                </span>
+              
+              {error && (
+                <div className="lp-error auth-slide-down" role="alert">
+                  <AlertCircle className="lp-error-icon" aria-hidden />
+                  <span>{error}</span>
+                </div>
               )}
-            </button>
-          </form>
 
-          <p className="lp-footer flex items-center justify-center gap-1.5">
-            <ShieldCheck className="w-3.5 h-3.5 text-green-700" strokeWidth={1.5} />
-            आपका डेटा सुरक्षित और एन्क्रिप्टेड है
-          </p>
+              <button type="submit" disabled={busy || !phoneValid} className="lp-btn">
+                {busy ? <Loader2 className="lp-btn-spin" /> : "OTP भेजें"}
+              </button>
+              
+              <button 
+                type="button" 
+                onClick={() => setForgotMode('none')}
+                className="mt-3 text-sm font-semibold text-slate-400 hover:text-slate-300"
+              >
+                लॉगिन पर वापस जाएं
+              </button>
+            </form>
+          )}
+
+          {/* ── Forgot PIN: Verify OTP ────────────────────────────────── */}
+          {forgotMode === 'otp' && (
+            <form onSubmit={handleVerifyOtp} noValidate className="lp-form">
+              <div className="lp-field">
+                <label className="lp-label" htmlFor="lp-otp">OTP (टेस्ट: 123456)</label>
+                <div className="lp-input-row">
+                  <KeyRound className="lp-icon" aria-hidden />
+                  <input
+                    id="lp-otp"
+                    type="text"
+                    inputMode="numeric"
+                    placeholder="• • • • • •"
+                    value={otp}
+                    onChange={(e) => handleOtpChange(e.target.value)}
+                    className="lp-input lp-input--pin"
+                    disabled={busy}
+                    maxLength={6}
+                    autoFocus
+                  />
+                </div>
+              </div>
+              
+              {error && (
+                <div className="lp-error auth-slide-down" role="alert">
+                  <AlertCircle className="lp-error-icon" aria-hidden />
+                  <span>{error}</span>
+                </div>
+              )}
+
+              <button type="submit" disabled={busy || otp.length !== 6} className="lp-btn">
+                सत्यापित करें
+              </button>
+              
+              <button 
+                type="button" 
+                onClick={() => setForgotMode('phone')}
+                className="mt-3 text-sm font-semibold text-slate-400 hover:text-slate-300"
+              >
+                नंबर बदलें
+              </button>
+            </form>
+          )}
+
+          {/* ── Forgot PIN: Set New PIN ────────────────────────────────── */}
+          {forgotMode === 'new-pin' && (
+            <form onSubmit={handleSetNewPin} noValidate className="lp-form">
+              <div className="lp-field">
+                <label className="lp-label" htmlFor="lp-new-pin">नया PIN</label>
+                <div className="lp-input-row">
+                  <Lock className="lp-icon" aria-hidden />
+                  <input
+                    id="lp-new-pin"
+                    type={showNewPin ? "text" : "password"}
+                    inputMode="numeric"
+                    placeholder="नया 4-6 अंकों का PIN"
+                    value={newPin}
+                    onChange={(e) => handleNewPinChange(e.target.value)}
+                    className="lp-input lp-input--pin"
+                    disabled={busy}
+                    maxLength={6}
+                    autoFocus
+                  />
+                  <button
+                    type="button"
+                    className="lp-eye"
+                    onClick={() => setShowNewPin((v) => !v)}
+                    tabIndex={-1}
+                  >
+                    {showNewPin ? <EyeOff className="lp-eye-icon" /> : <Eye className="lp-eye-icon" />}
+                  </button>
+                </div>
+              </div>
+              
+              {error && (
+                <div className="lp-error auth-slide-down" role="alert">
+                  <AlertCircle className="lp-error-icon" aria-hidden />
+                  <span>{error}</span>
+                </div>
+              )}
+
+              <button type="submit" disabled={busy || newPin.length < 4} className="lp-btn">
+                {busy ? <Loader2 className="lp-btn-spin" /> : "नया PIN सेव करें"}
+              </button>
+            </form>
+          )}
+
+          {/* ── Footer Info ─────────────────────────── */}
+          {forgotMode === 'none' && (
+            <p className="lp-footer flex items-center justify-center gap-1.5 mb-2 mt-[22px]">
+              <ShieldCheck className="w-3.5 h-3.5 text-green-700" strokeWidth={1.5} />
+              आपका डेटा सुरक्षित और एन्क्रिप्टेड है
+            </p>
+          )}
+
+          {/* ── WhatsApp Support Fallback ────────────────── */}
+          <div className="mt-5 pt-5 border-t border-white/5 flex justify-center">
+            <a 
+              href="https://wa.me/918077170715?text=नमस्ते,%20मुझे%20Kisan%20Diary%20लॉगिन%20में%20मदद%20चाहिए।" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="flex items-center justify-center w-full gap-2 text-[15px] font-bold text-[#25D366] hover:text-[#1ebe5b] transition-all bg-[#25D366]/10 hover:bg-[#25D366]/20 px-4 py-3.5 rounded-xl border border-[#25D366]/30 shadow-lg shadow-[#25D366]/5"
+            >
+              <MessageCircle className="w-5 h-5" fill="currentColor" />
+              WhatsApp पर सहायता लें
+            </a>
+          </div>
         </div>
       </div>
 
@@ -450,7 +881,7 @@ export default function LoginPage() {
         /* ── Hint ───────────────────────────── */
         .lp-hint { font-size: 11.5px; color: #334155; margin-top: 3px; }
 
-        /* ── Submit error ───────────────────── */
+        /* ── Submit error / success ─────────── */
         .lp-error {
           display: flex; align-items: flex-start; gap: 10px;
           background: rgba(239,68,68,0.1);
@@ -460,9 +891,17 @@ export default function LoginPage() {
         }
         .lp-error-icon { width: 15px; height: 15px; flex-shrink: 0; margin-top: 1px; color: #f87171; }
 
+        .lp-success {
+          display: flex; align-items: flex-start; gap: 10px;
+          background: rgba(16,185,129,0.1);
+          border: 1px solid rgba(16,185,129,0.2);
+          border-radius: 12px; padding: 12px 14px;
+          font-size: 13px; color: #6ee7b7; line-height: 1.5;
+        }
+        .lp-success-icon { width: 15px; height: 15px; flex-shrink: 0; margin-top: 1px; color: #34d399; }
+
         /* ── Button ─────────────────────────── */
         .lp-btn {
-          margin-top: 4px;
           height: 52px; width: 100%;
           border: none; border-radius: 14px; cursor: pointer;
           font-size: 15px; font-weight: 700; font-family: inherit;
@@ -482,11 +921,27 @@ export default function LoginPage() {
 
         /* ── Footer ─────────────────────────── */
         .lp-footer {
-          margin-top: 22px; text-align: center;
+          text-align: center;
           font-size: 11.5px; color: #1e293b;
         }
 
         @keyframes spin { to { transform: rotate(360deg); } }
+        
+        .auth-scale-in {
+          animation: scaleIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        @keyframes scaleIn {
+          from { opacity: 0; transform: scale(0.96); }
+          to { opacity: 1; transform: scale(1); }
+        }
+
+        .auth-slide-down {
+          animation: slideDown 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        @keyframes slideDown {
+          from { opacity: 0; transform: translateY(-10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
       `}</style>
     </main>
   );

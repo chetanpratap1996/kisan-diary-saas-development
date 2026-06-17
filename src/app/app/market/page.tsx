@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useApp } from "@/context/AppContext";
+import { t } from "@/lib/translations";
+import type { TranslationKey } from "@/lib/translations";
 import { formatCurrency } from "@/lib/utils";
 import Image from "next/image";
 import { 
@@ -21,14 +23,16 @@ interface Commodity {
 
 interface MarketData {
   advisory: {
-    message: string;
     type: 'up' | 'down' | 'stable';
+    cropId: string;
+    change: number;
   };
   commodities: Commodity[];
 }
 
 export default function MarketDashboard() {
-  const { apiCall } = useApp();
+  const { apiCall, language } = useApp();
+  const lang = language || "hi";
   const [data, setData] = useState<MarketData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -60,17 +64,24 @@ export default function MarketDashboard() {
             <Store className="w-10 h-10 text-green-700" />
           </div>
         </div>
-        <h2 className="text-2xl font-bold text-stone-800 mb-2">Getting Mandi Prices...</h2>
-        <p className="text-stone-500 font-medium text-center">Fetching live data for your local markets.</p>
+        <h2 className="text-2xl font-bold text-stone-800 mb-2">{t(lang, "gettingMandiPrices")}</h2>
+        <p className="text-stone-500 font-medium text-center">{t(lang, "fetchingMandiData")}</p>
       </div>
     );
   }
 
   if (!data) return null;
 
-  const filteredCommodities = data.commodities.filter(c => 
-    c.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredCommodities = data.commodities.filter(c => {
+    const translatedName = t(lang, `crop_${c.id}` as TranslationKey) || c.name;
+    return translatedName.toLowerCase().includes(searchQuery.toLowerCase());
+  });
+
+  const advCropName = data.advisory.cropId ? t(lang, `crop_${data.advisory.cropId}` as TranslationKey) : '';
+  const advisoryTemplate = t(lang, `advisory_${data.advisory.type}` as TranslationKey) || "";
+  const advisoryMessage = advisoryTemplate
+    .replace('{crop}', advCropName)
+    .replace('{change}', data.advisory.change.toString());
 
   return (
     <div className="min-h-screen bg-stone-50 pb-24 font-sans selection:bg-green-100">
@@ -79,14 +90,14 @@ export default function MarketDashboard() {
         <div className="flex justify-between items-center">
           <div>
             <h1 className="text-2xl font-extrabold text-stone-900 flex items-center gap-2">
-              Mandi Live
+              {t(lang, "mandiLive")}
               <span className="relative flex h-3 w-3 ml-1">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-500 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-3 w-3 bg-green-600"></span>
               </span>
             </h1>
             <p className="text-stone-600 text-sm font-medium flex items-center gap-1.5 mt-1">
-              <MapPin className="w-3.5 h-3.5 text-green-700" /> Your Local Market
+              <MapPin className="w-3.5 h-3.5 text-green-700" /> {t(lang, "yourLocalMarket")}
             </p>
           </div>
           <button className="w-11 h-11 bg-white rounded-full flex items-center justify-center border border-stone-200 shadow-sm relative hover:bg-stone-50">
@@ -107,7 +118,7 @@ export default function MarketDashboard() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="block w-full pl-12 pr-4 py-4 bg-white border border-stone-200 rounded-2xl text-[16px] font-medium text-stone-900 placeholder-stone-400 focus:outline-none focus:border-green-600 focus:ring-1 focus:ring-green-600 shadow-sm"
-            placeholder="Search crop (e.g. Wheat, Onion)..."
+            placeholder={t(lang, "searchCropPlaceholder")}
           />
         </div>
 
@@ -124,10 +135,10 @@ export default function MarketDashboard() {
                data.advisory.type === 'down' ? 'bg-red-200 text-red-800' : 
                'bg-blue-200 text-blue-800'
             }`}>
-              <Info className="w-3.5 h-3.5" /> Mandi Advice (मंडी सलाह)
+              <Info className="w-3.5 h-3.5" /> {t(lang, "mandiAdviceLabel")}
             </div>
             <h3 className="text-stone-900 font-bold text-lg leading-snug">
-              {data.advisory.message}
+              {advisoryMessage}
             </h3>
           </div>
         </div>
@@ -136,18 +147,21 @@ export default function MarketDashboard() {
         <div>
           <div className="flex items-center justify-between mb-4 px-1">
             <h3 className="text-lg font-extrabold text-stone-900">
-              Today's Prices
+              {t(lang, "todaysPrices" as TranslationKey)}
             </h3>
-            <span className="text-[11px] text-stone-500 font-bold uppercase bg-stone-200 px-2.5 py-1 rounded-md">₹ per Quintal</span>
+            <span className="text-[11px] text-stone-500 font-bold uppercase bg-stone-200 px-2.5 py-1 rounded-md">{t(lang, "rsPerQuintal")}</span>
           </div>
 
           <div className="space-y-5">
             {filteredCommodities.map((commodity) => {
               const isPositive = commodity.change >= 0;
               const recommendationColor = 
-                commodity.recommendation === 'Sell Now' ? 'bg-green-100 text-green-800 border-green-300' :
-                commodity.recommendation === 'Wait' ? 'bg-red-100 text-red-800 border-red-300' :
+                commodity.recommendation === 'sell' ? 'bg-green-100 text-green-800 border-green-300' :
+                commodity.recommendation === 'wait' ? 'bg-red-100 text-red-800 border-red-300' :
                 'bg-blue-100 text-blue-800 border-blue-300';
+                
+              const translatedCropName = t(lang, `crop_${commodity.id}` as TranslationKey) || commodity.name;
+              const translatedRec = t(lang, `rec_${commodity.recommendation}` as TranslationKey);
 
               return (
                 <div key={commodity.id} className="bg-white rounded-2xl shadow-sm border border-stone-200 overflow-hidden">
@@ -159,16 +173,16 @@ export default function MarketDashboard() {
                       <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-stone-100 shadow-sm relative bg-stone-50 shrink-0">
                         <Image 
                           src={commodity.image} 
-                          alt={commodity.name}
+                          alt={translatedCropName}
                           fill
                           className="object-cover"
                         />
                       </div>
                       <div>
-                        <h4 className="font-extrabold text-stone-900 text-lg">{commodity.name}</h4>
+                        <h4 className="font-extrabold text-stone-900 text-lg">{translatedCropName}</h4>
                         <div className="mt-1">
                           <span className={`text-[11px] font-bold px-2 py-0.5 rounded border ${recommendationColor}`}>
-                            Advice: {commodity.recommendation}
+                            {t(lang, "advicePrefix")} {translatedRec}
                           </span>
                         </div>
                       </div>
@@ -186,7 +200,7 @@ export default function MarketDashboard() {
                   {/* Bottom Section: Compact 7-Day History */}
                   <div className="bg-stone-50/50 border-t border-stone-100 px-4 pt-3 pb-4">
                     <p className="text-[10px] font-extrabold text-stone-400 flex items-center gap-1.5 mb-3 uppercase tracking-wider">
-                      <CalendarDays className="w-3 h-3" /> 7-Day Trend
+                      <CalendarDays className="w-3 h-3" /> {t(lang, "sevenDayTrend")}
                     </p>
                     
                     <div className="flex justify-between items-end h-14">
@@ -196,14 +210,14 @@ export default function MarketDashboard() {
                         const maxP = Math.max(...prices);
                         const range = (maxP - minP) || 1;
                         
-                        return commodity.trend.map((t, i) => {
+                        return commodity.trend.map((tItem, i) => {
                           const isLast = i === commodity.trend.length - 1;
-                          const heightPct = ((t.price - minP) / range) * 100;
+                          const heightPct = ((tItem.price - minP) / range) * 100;
                           
                           return (
                             <div key={i} className="flex flex-col items-center justify-end h-full gap-1 flex-1 group">
                               <span className={`text-[9px] font-black leading-none mb-0.5 ${isLast ? 'text-green-600' : 'text-stone-400 group-hover:text-stone-600'}`}>
-                                {t.price}
+                                {tItem.price}
                               </span>
                               <div className="w-full px-1">
                                 <div 
@@ -212,7 +226,7 @@ export default function MarketDashboard() {
                                 ></div>
                               </div>
                               <span className={`text-[9px] font-bold uppercase mt-0.5 ${isLast ? 'text-stone-800' : 'text-stone-400'}`}>
-                                {t.label}
+                                {t(lang, `day_${tItem.label}` as TranslationKey) || tItem.label}
                               </span>
                             </div>
                           );
@@ -227,7 +241,7 @@ export default function MarketDashboard() {
 
             {filteredCommodities.length === 0 && (
               <div className="text-center py-12 bg-white rounded-2xl border border-stone-200">
-                <p className="text-stone-500 font-bold">No crops found matching "{searchQuery}"</p>
+                <p className="text-stone-500 font-bold">{t(lang, "noCropsFound")} "{searchQuery}"</p>
               </div>
             )}
           </div>

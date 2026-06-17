@@ -130,22 +130,22 @@ function getTimeIcon(timeState: "raat" | "subah" | "dopahar" | "sham"): string {
 
 // Crop growth phase label based on days
 function getCropPhase(days: number, lang: string): { label: string; emoji: string; pct: number } {
-  if (days <= 7)   return { label: lang === "en" ? "Sowing"      : "बुवाई",    emoji: "🌱", pct: 5  };
-  if (days <= 25)  return { label: lang === "en" ? "Sprouting"   : "अंकुरण",   emoji: "🪴", pct: 25 };
-  if (days <= 60)  return { label: lang === "en" ? "Growing"     : "बढ़वार",   emoji: "🌿", pct: 50 };
-  if (days <= 90)  return { label: lang === "en" ? "Flowering"   : "फूल आना", emoji: "🌸", pct: 70 };
-  if (days <= 120) return { label: lang === "en" ? "Ripening"    : "पकाव",     emoji: "🌾", pct: 87 };
-  return             { label: lang === "en" ? "Harvest Ready" : "कटाई",    emoji: "🪬", pct: 100 };
+  if (days <= 7)   return { label: t(lang, "phaseSowing"),    emoji: "🌱", pct: 5  };
+  if (days <= 25)  return { label: t(lang, "phaseSprouting"),   emoji: "🪴", pct: 25 };
+  if (days <= 60)  return { label: t(lang, "phaseGrowing"),   emoji: "🌿", pct: 50 };
+  if (days <= 90)  return { label: t(lang, "phaseFlowering"), emoji: "🌸", pct: 70 };
+  if (days <= 120) return { label: t(lang, "phaseRipening"),     emoji: "🌾", pct: 87 };
+  return             { label: t(lang, "phaseHarvestReady"),    emoji: "🪬", pct: 100 };
 }
 
 // Dynamic advisory based on crop phase
 function getDynamicAdvisory(days: number, lang: string): string {
-  if (days <= 7)   return lang === "en" ? "Check soil moisture. Ensure even germination." : "मिट्टी की नमी जांचें। समान अंकुरण सुनिश्चित करें।";
-  if (days <= 25)  return lang === "en" ? "First watering due. Apply basal fertilizer." : "पहली सिंचाई का समय। जड़ खाद डालें।";
-  if (days <= 60)  return lang === "en" ? "Weeding recommended. Monitor for pests." : "निराई-गुड़ाई करें। कीड़े-मकोड़ों पर नज़र रखें।";
-  if (days <= 90)  return lang === "en" ? "Flowering stage — reduce irrigation. No sprays." : "फूल आने की अवस्था — सिंचाई कम करें। दवाई न डालें।";
-  if (days <= 120) return lang === "en" ? "Stop irrigation 2 weeks before harvest." : "कटाई से 2 हफ्ते पहले सिंचाई बंद करें।";
-  return lang === "en" ? "Crop is ready for harvest. Contact your trader." : "फसल कटाई के लिए तैयार है। व्यापारी से संपर्क करें।";
+  if (days <= 7)   return t(lang, "advSowing");
+  if (days <= 25)  return t(lang, "advSprouting");
+  if (days <= 60)  return t(lang, "advGrowing");
+  if (days <= 90)  return t(lang, "advFlowering");
+  if (days <= 120) return t(lang, "advRipening");
+  return t(lang, "advHarvestReady");
 }
 
 // Quick actions with SEMANTIC color system
@@ -389,7 +389,7 @@ export default function HomePage() {
   const headerGrad = getHeaderGradient(timeState);
   const daysActive = activeSeason ? daysDiff(activeSeason.startDate) : 0;
   const cropPhase  = activeSeason ? getCropPhase(daysActive, lang) : null;
-  const userName   = user?.name || (lang === "en" ? "Farmer" : "किसान");
+  const userName   = user?.name || (t(lang, "farmer"));
   const userState  = user?.state || "India";
   const cropEmoji  = activeSeason ? getCropEmoji(activeSeason.cropName) : "🌱";
 
@@ -429,7 +429,7 @@ export default function HomePage() {
             <div className="flex items-center gap-1.5 text-green-200/80 text-xs font-semibold mb-1 tracking-wide">
               <span className="text-sm">{timeIcon}</span>
               <span>
-                {new Date().toLocaleDateString(lang === "en" ? "en-IN" : "hi-IN", {
+                {new Date().toLocaleDateString(lang === "en" ? "en-IN" : (lang === "mr" ? "mr-IN" : (lang === "pa" ? "pa-IN" : "hi-IN")), {
                   weekday: "long", day: "numeric", month: "long"
                 })}
               </span>
@@ -443,7 +443,7 @@ export default function HomePage() {
               {streakDays >= 3 && (
                 <span className="ml-2 flex items-center gap-1 bg-orange-500/25 border border-orange-400/30 text-orange-300 text-[10px] font-black px-2 py-0.5 rounded-full">
                   <Flame className="w-3 h-3" />
-                  {streakDays} {lang === "en" ? "day streak" : "दिन"}
+                  {streakDays} {t(lang, "dayStreak")}
                 </span>
               )}
             </div>
@@ -508,7 +508,7 @@ export default function HomePage() {
                 </svg>
                 <div className="absolute inset-0 flex flex-col items-center justify-center">
                   <span className="text-white font-black text-base leading-none">{daysActive}</span>
-                  <span className="text-white/60 text-[8px] font-bold uppercase">{lang === "en" ? "days" : "दिन"}</span>
+                  <span className="text-white/60 text-[8px] font-bold uppercase">{t(lang, "days")}</span>
                 </div>
               </div>
             </div>
@@ -519,11 +519,11 @@ export default function HomePage() {
                 <div className="flex justify-between text-[11px] font-bold text-white/80 mb-2">
                   <span>
                     <span className="text-green-300 mr-1">↑</span>
-                    {lang === "en" ? "Income" : "आमदनी"}: <span className="text-white">{formatCurrency(seasonSummary.totalIncome || 0)}</span>
+                    {t(lang, "incomeLabel")}: <span className="text-white">{formatCurrency(seasonSummary.totalIncome || 0)}</span>
                   </span>
                   <span>
                     <span className="text-red-300 mr-1">↓</span>
-                    {lang === "en" ? "Expense" : "खर्च"}: <span className="text-white">{formatCurrency(seasonSummary.totalExpense || 0)}</span>
+                    {t(lang, "expenseLabel")}: <span className="text-white">{formatCurrency(seasonSummary.totalExpense || 0)}</span>
                   </span>
                 </div>
                 <div className="flex h-2 rounded-full overflow-hidden bg-white/10 gap-0.5">
@@ -532,7 +532,7 @@ export default function HomePage() {
                 </div>
                 <div className={`mt-2 text-[11px] font-black ${(seasonSummary.netProfitLoss || 0) >= 0 ? "text-green-300" : "text-red-300"}`}>
                   {(seasonSummary.netProfitLoss || 0) >= 0 ? "✓ " : "⚠ "}
-                  {lang === "en" ? "Net" : "बचत"}: {formatCurrency(seasonSummary.netProfitLoss || 0)}
+                  {t(lang, "net")}: {formatCurrency(seasonSummary.netProfitLoss || 0)}
                 </div>
               </div>
             )}
@@ -543,7 +543,7 @@ export default function HomePage() {
                 <span className="text-sm">💡</span>
               </div>
               <div>
-                <p className="text-white/60 text-[10px] font-bold uppercase tracking-wider mb-0.5">{lang === "en" ? "Today's Advisory" : "आज का सुझाव"}</p>
+                <p className="text-white/60 text-[10px] font-bold uppercase tracking-wider mb-0.5">{t(lang, "todaysAdvisory")}</p>
                 <p className="text-white text-sm font-semibold leading-snug">{getDynamicAdvisory(daysActive, lang)}</p>
               </div>
             </div>
@@ -584,7 +584,7 @@ export default function HomePage() {
         <div className="flex items-center">
           <div className="flex-shrink-0 bg-green-600 text-white text-[9px] font-black uppercase tracking-widest px-3 py-2.5 flex items-center gap-1">
             <BarChart3 className="w-3 h-3" />
-            <span className="whitespace-nowrap">{lang === "en" ? "MANDI" : "मंडी"}</span>
+            <span className="whitespace-nowrap">{t(lang, "mandi")}</span>
           </div>
           <div className="overflow-hidden flex-1">
             <div className="flex gap-5 px-3 py-2 overflow-x-auto scrollbar-hide" ref={tickerRef}>
@@ -701,7 +701,7 @@ export default function HomePage() {
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-gray-800 font-black text-base flex items-center gap-2">
             <Zap className="w-5 h-5 text-amber-500" strokeWidth={2} fill="currentColor" />
-            {lang === "en" ? "Quick Log" : "जल्दी लिखें"}
+            {t(lang, "quickLog")}
           </h2>
         </div>
 
@@ -720,7 +720,7 @@ export default function HomePage() {
                   <Icon className="w-5 h-5" strokeWidth={2.5} />
                 </div>
                 <span className={`text-sm font-black ${action.iconColor} relative z-10`}>
-                  {lang === "en" ? action.label_en : action.label_hi}
+                  {t(lang, action.translationKey as TranslationKey)}
                 </span>
               </button>
             );
@@ -742,7 +742,7 @@ export default function HomePage() {
                   <Icon className="w-6 h-6 relative z-10 group-hover:scale-110 transition-transform duration-200" strokeWidth={2.5} />
                 </div>
                 <span className={`text-[11px] font-black text-center leading-tight ${action.iconColor}`}>
-                  {lang === "en" ? action.label_en : action.label_hi}
+                  {t(lang, action.translationKey as TranslationKey)}
                 </span>
               </button>
             );
@@ -756,10 +756,10 @@ export default function HomePage() {
           <div className="bg-white border border-dashed border-green-200 rounded-2xl p-7 flex flex-col items-center text-center shadow-sm">
             <div className="text-4xl mb-3">🌾</div>
             <h3 className="font-black text-gray-900 mb-1.5 text-lg">
-              {lang === "en" ? "No Farms Yet" : "अभी कोई खेत नहीं"}
+              {t(lang, "noFarmsYet")}
             </h3>
             <p className="text-gray-500 text-sm mb-5 max-w-xs leading-relaxed">
-              {lang === "en" ? "Add your first farm to start tracking your crops, expenses, and harvests." : "अपना पहला खेत जोड़ें और खेती का हिसाब शुरू करें।"}
+              {t(lang, "addFirstFarm")}
             </p>
             <Button
               onClick={() => router.push("/app/settings")}
@@ -801,14 +801,12 @@ export default function HomePage() {
 
               <div className="flex-1 min-w-0">
                 <h3 className="text-white font-black text-xl leading-tight mb-1">
-                  {lang === "en" ? "Voice Record" : (
-                    <>आवाज़ से <span className="text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-emerald-400">हिसाब</span> रखें</>
-                  )}
+                  {t(lang, "voiceRecord")}
                 </h3>
-                <p className="text-green-100/50 text-xs mb-3">{lang === "en" ? "Press the green mic and speak." : "हरे बटन को दबाएं और बोलें।"}</p>
+                <p className="text-green-100/50 text-xs mb-3">{t(lang, "voiceMicPrompt")}</p>
                 <div className="bg-white/8 border border-white/12 rounded-xl px-4 py-3 backdrop-blur-sm">
-                  <p className="text-white/50 text-[10px] font-bold uppercase tracking-wider mb-1">💡 {lang === "en" ? "Try saying" : "बोल कर देखें"}</p>
-                  <p className="text-white font-bold text-sm">"{lang === "en" ? "I spent ₹500 on fertilizer" : "मैंने 500 रुपये खाद पर खर्च किए"}"</p>
+                  <p className="text-white/50 text-[10px] font-bold uppercase tracking-wider mb-1">💡 {t(lang, "voiceTrySaying")}</p>
+                  <p className="text-white font-bold text-sm">"{t(lang, "voiceExample")}"</p>
                 </div>
               </div>
             </div>
@@ -844,7 +842,7 @@ export default function HomePage() {
                 <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
                   <PieChart className="w-4 h-4 text-white" />
                 </div>
-                <span className="text-sm">{lang === "en" ? "View Crop Profitability (P&L)" : "फसल की कमाई देखें (P&L)"}</span>
+                <span className="text-sm">{t(lang, "viewProfitability")}</span>
               </div>
               <ArrowUpRight className="w-5 h-5 opacity-70 group-hover:opacity-100 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
             </button>
@@ -870,7 +868,7 @@ export default function HomePage() {
                 <div>
                   <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-white/20 border border-white/15 text-white text-[9px] font-black uppercase tracking-widest mb-1.5">
                     <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse" />
-                    {lang === "en" ? "Live Update" : "लाइव अपडेट"}
+                    {t(lang, "liveUpdate")}
                   </div>
                   <h3 className="text-white font-bold text-sm leading-snug">{insights.advisory}</h3>
                 </div>
@@ -882,7 +880,7 @@ export default function HomePage() {
               <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
                 <h3 className="text-gray-800 font-black text-sm mb-3 flex items-center gap-2">
                   <span className="text-base">📅</span>
-                  {lang === "en" ? "Upcoming Activities" : "आगामी कार्य"}
+                  {t(lang, "upcomingActivities")}
                 </h3>
                 <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-hide">
                   {insights.smartSchedules.map((schedule: any, idx: number) => (
@@ -900,10 +898,10 @@ export default function HomePage() {
                           : "bg-green-100 text-green-800"
                       }`}>
                         {schedule.daysRemaining === 0
-                          ? (lang === "en" ? "Today" : "आज")
+                          ? (t(lang, "today"))
                           : schedule.daysRemaining < 0
-                          ? (lang === "en" ? `Late ${Math.abs(schedule.daysRemaining)}d` : `${Math.abs(schedule.daysRemaining)} दिन देर`)
-                          : (lang === "en" ? `In ${schedule.daysRemaining} days` : `${schedule.daysRemaining} दिन में`)}
+                          ? (`${Math.abs(schedule.daysRemaining)} ${t(lang, "lateDays")}`)
+                          : (`${schedule.daysRemaining} ${t(lang, "inDays")}`)}
                       </div>
                       <h4 className="font-black text-gray-900 text-sm mb-1 leading-tight">{schedule.title}</h4>
                       <p className={`text-[10px] font-bold flex items-center gap-1 mb-3 ${schedule.status === "delayed" ? "text-amber-700" : "text-green-700"}`}>
@@ -919,7 +917,7 @@ export default function HomePage() {
                             : "border-green-200 text-green-700 hover:bg-green-100"
                         }`}
                       >
-                        ✓ {lang === "en" ? "Mark Done" : "पूरा किया"}
+                        ✓ {t(lang, "markDone")}
                       </Button>
                     </div>
                   ))}
@@ -934,7 +932,7 @@ export default function HomePage() {
                   <Package className="w-4 h-4 text-red-600" />
                 </div>
                 <div>
-                  <p className="text-red-600 text-[10px] font-black uppercase tracking-wider mb-0.5">{lang === "en" ? "Low Inventory" : "स्टॉक कम"}</p>
+                  <p className="text-red-600 text-[10px] font-black uppercase tracking-wider mb-0.5">{t(lang, "lowInventory")}</p>
                   <p className="text-red-900 text-sm font-semibold leading-tight">{alert.message}</p>
                 </div>
               </div>
@@ -1034,7 +1032,7 @@ export default function HomePage() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between mb-0.5">
                       <p className="font-black text-gray-800 text-sm">
-                        {isOther ? "अज्ञात गतिविधि" : (lang === "en" ? action?.label_en : action?.label_hi)}
+                        {isOther ? "अज्ञात गतिविधि" : (t(lang, action?.translationKey as TranslationKey))}
                       </p>
                       <div className="flex items-center gap-1.5">
                         <p className="text-gray-400 text-[10px] font-medium">{formatDate(log.date)}</p>
@@ -1056,7 +1054,7 @@ export default function HomePage() {
                               onClick={(e) => { e.stopPropagation(); confirmCategory(log.id, a.type); }}
                               className={`text-[10px] font-black border px-2.5 py-1 rounded-lg flex items-center gap-1 transition-colors ${a.bg} ${a.border} ${a.iconColor} hover:opacity-80`}
                             >
-                              <a.icon className="w-3 h-3" /> {lang === "en" ? a.label_en : a.label_hi}
+                              <a.icon className="w-3 h-3" /> {t(lang, a.translationKey as TranslationKey)}
                             </button>
                           ))}
                         </div>
@@ -1064,7 +1062,7 @@ export default function HomePage() {
                     )}
                     {log.workers && !isOther && (
                       <div className="mt-1.5 inline-flex items-center gap-1 bg-orange-50 text-orange-600 px-2 py-0.5 rounded-md text-[10px] font-bold">
-                        <Users className="w-3 h-3" /> {log.workers} {lang === "en" ? "workers" : "मजदूर"}
+                        <Users className="w-3 h-3" /> {log.workers} {t(lang, "workersCount")}
                       </div>
                     )}
                   </div>
@@ -1083,7 +1081,7 @@ export default function HomePage() {
           <div className="absolute inset-0 opacity-5" style={{ backgroundImage: "radial-gradient(circle, #16a34a 1px, transparent 1px)", backgroundSize: "16px 16px" }} />
           <p className="text-[10px] text-green-500 font-black uppercase tracking-widest mb-2 relative z-10 flex items-center justify-center gap-1.5">
             <Leaf className="w-3.5 h-3.5" strokeWidth={2} />
-            {lang === "en" ? "Farmer's Wisdom" : "किसान की बात"}
+            {t(lang, "farmersWisdom")}
           </p>
           <p className="text-green-800 font-semibold text-sm leading-relaxed relative z-10 transition-all duration-500">
             "{WISDOM_QUOTES[quoteIdx]}"
@@ -1121,7 +1119,7 @@ export default function HomePage() {
                       {editingLogId ? t(lang, "edit" as TranslationKey) : t(lang, "addLog" as TranslationKey)}
                     </DialogTitle>
                     <p className={`text-sm mt-1 font-semibold ${action?.iconColor || "text-gray-500"}`}>
-                      {action ? (lang === "en" ? action.label_en : action.label_hi) : ""}
+                      {action ? (t(lang, action.translationKey as TranslationKey)) : ""}
                     </p>
                   </div>
                 </div>
@@ -1140,11 +1138,11 @@ export default function HomePage() {
                       <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest mb-2 flex justify-between items-center">
                         <span className="flex items-center gap-1.5">
                           <DollarSign className="w-3.5 h-3.5" strokeWidth={2} />
-                          {lang === "en" ? "Amount (₹)" : "रकम (₹)"}
+                          {t(lang, "amountRs")}
                         </span>
-                        <span className="text-gray-300 normal-case font-normal text-[10px]">{lang === "en" ? "Optional" : "वैकल्पिक"}</span>
+                        <span className="text-gray-300 normal-case font-normal text-[10px]">{t(lang, "optional")}</span>
                       </label>
-                      <Input type="number" placeholder={lang === "en" ? "e.g. 500" : "जैसे 500"} value={logAmount}
+                      <Input type="number" placeholder={t(lang, "eg500")} value={logAmount}
                         onChange={(e) => setLogAmount(e.target.value)} min="0"
                         className="h-12 rounded-xl bg-gray-50 border-gray-200 focus:ring-green-500 focus:border-green-500 text-gray-800 font-medium" />
                     </div>
@@ -1155,7 +1153,7 @@ export default function HomePage() {
                       <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest mb-2 flex items-center gap-1.5">
                         <HardHat className="w-3.5 h-3.5" strokeWidth={1.5} /> {t(lang, "workerCount" as TranslationKey)}
                       </label>
-                      <Input type="number" placeholder={lang === "en" ? "e.g. 5" : "जैसे 5"} value={logWorkers}
+                      <Input type="number" placeholder={t(lang, "eg5")} value={logWorkers}
                         onChange={(e) => setLogWorkers(e.target.value)} min="1"
                         className="h-12 rounded-xl bg-gray-50 border-gray-200 focus:ring-orange-500 focus:border-orange-500 text-gray-800 font-medium" />
                     </div>
@@ -1165,7 +1163,7 @@ export default function HomePage() {
                     <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest mb-2 flex items-center gap-1.5">
                     <StickyNote className="w-3.5 h-3.5" strokeWidth={1.5} /> {t(lang, "note" as TranslationKey)}
                   </label>
-                    <Input placeholder={lang === "en" ? "Optional note..." : "नोट (वैकल्पिक)"} value={logNote}
+                    <Input placeholder={t(lang, "optionalNote")} value={logNote}
                       onChange={(e) => setLogNote(e.target.value)}
                       className="h-12 rounded-xl bg-gray-50 border-gray-200 focus:ring-green-500 focus:border-green-500 text-gray-800 font-medium" />
                   </div>

@@ -66,7 +66,7 @@ export default function CreditPage() {
       <div className="min-h-screen bg-[#020804] flex flex-col items-center justify-center relative overflow-hidden">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-emerald-500/10 rounded-full blur-[80px]" />
         <ShieldCheck className="w-16 h-16 text-emerald-500 animate-pulse drop-shadow-[0_0_15px_rgba(16,185,129,0.5)] z-10" />
-        <p className="mt-6 text-emerald-400/80 font-medium tracking-widest uppercase text-sm z-10 animate-pulse">Initializing Scoring Engine</p>
+        <p className="mt-6 text-emerald-400/80 font-medium tracking-widest uppercase text-sm z-10 animate-pulse">{t(lang, "initScoring")}</p>
       </div>
     );
   }
@@ -94,25 +94,25 @@ export default function CreditPage() {
 
   let scoreColor = "text-rose-500";
   let strokeColor = "#f43f5e";
-  let tierLabel = "Needs Work";
+  let tierLabel = t(lang, "tierNeedsWork");
   let tierGradient = "from-rose-500/20 to-transparent";
   
   if (animatedScore >= 500) {
     scoreColor = "text-amber-400";
     strokeColor = "#fbbf24";
-    tierLabel = "Fair";
+    tierLabel = t(lang, "tierFair");
     tierGradient = "from-amber-500/20 to-transparent";
   }
   if (animatedScore >= 650) {
     scoreColor = "text-emerald-400";
     strokeColor = "#34d399";
-    tierLabel = "Good";
+    tierLabel = t(lang, "tierGood");
     tierGradient = "from-emerald-500/20 to-transparent";
   }
   if (animatedScore >= 750) {
     scoreColor = "text-teal-400";
     strokeColor = "#2dd4bf";
-    tierLabel = "Excellent";
+    tierLabel = t(lang, "tierExcellent");
     tierGradient = "from-teal-500/20 to-transparent";
   }
 
@@ -135,8 +135,8 @@ export default function CreditPage() {
             </div>
           </div>
           <div>
-            <h1 className="text-2xl font-black tracking-tight bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">Profile Readiness</h1>
-            <p className="text-emerald-400/80 text-xs font-bold uppercase tracking-widest mt-0.5">Govt. Scheme Eligibility</p>
+            <h1 className="text-2xl font-black tracking-tight bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">{t(lang, "profileReadiness")}</h1>
+            <p className="text-emerald-400/80 text-xs font-bold uppercase tracking-widest mt-0.5">{t(lang, "govtSchemeLabel")}</p>
           </div>
         </div>
       </div>
@@ -147,7 +147,7 @@ export default function CreditPage() {
           <div className={`absolute top-0 left-0 w-full h-32 bg-gradient-to-b ${tierGradient} opacity-50 pointer-events-none rounded-t-[2.5rem]`} />
           
           <h2 className="text-xs font-bold text-gray-400 uppercase tracking-[0.2em] mb-8 z-10 flex items-center gap-2">
-            <FileCheck2 className="w-4 h-4 text-emerald-400" /> Assessment Engine
+            <FileCheck2 className="w-4 h-4 text-emerald-400" /> {t(lang, "assessmentEngine")}
           </h2>
           
           <div className="relative w-64 h-52 flex justify-center z-10 mt-2">
@@ -183,20 +183,20 @@ export default function CreditPage() {
                 </span>
                 <div className={`absolute inset-0 ${scoreColor} blur-2xl opacity-20 z-0`}></div>
               </div>
-              <span className="text-[10px] font-bold text-gray-500 mt-2 uppercase tracking-[0.3em]">Max 850</span>
+              <span className="text-[10px] font-bold text-gray-500 mt-2 uppercase tracking-[0.3em]">{t(lang, "maxScore850")}</span>
             </div>
           </div>
           
           <div className="z-10 text-center -mt-4">
             <div className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full border mb-4 backdrop-blur-md ${animatedScore >= 750 ? 'bg-teal-500/10 border-teal-500/30 text-teal-300' : animatedScore >= 650 ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300' : animatedScore >= 500 ? 'bg-amber-500/10 border-amber-500/30 text-amber-300' : 'bg-rose-500/10 border-rose-500/30 text-rose-300'} shadow-lg`}>
               <BadgeCheck className="w-4 h-4" />
-              <span className="text-xs font-black uppercase tracking-widest">{tierLabel} Tier</span>
+              <span className="text-xs font-black uppercase tracking-widest">{tierLabel} {t(lang, "tierLabelStr")}</span>
             </div>
             
             <p className="text-sm text-gray-400 leading-relaxed max-w-xs mx-auto">
               {animatedScore >= 750 
-                ? "Outstanding records. You are fast-tracked for all major government subsidies."
-                : "Maintain your Khata regularly to boost your score and unlock premium subsidies."}
+                ? t(lang, "outstandingRecords")
+                : t(lang, "maintainKhata")}
             </p>
           </div>
         </div>
@@ -207,33 +207,33 @@ export default function CreditPage() {
         <div className="px-5 mb-10 relative z-10">
           <div className="flex items-center justify-between mb-5">
             <h3 className="text-xs font-black text-white uppercase tracking-[0.15em] flex items-center gap-2">
-              <TrendingUp className="w-4 h-4 text-emerald-400" /> Score Drivers
+              <TrendingUp className="w-4 h-4 text-emerald-400" /> {t(lang, "scoreDrivers")}
             </h3>
           </div>
           
           <div className="grid grid-cols-2 gap-4">
             <div className="bg-gradient-to-br from-white/[0.04] to-transparent border border-white/5 rounded-3xl p-5 hover:bg-white/[0.06] transition-colors relative overflow-hidden group">
               <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/10 rounded-full blur-xl group-hover:bg-blue-500/20 transition-colors" />
-              <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">Base Profile</p>
+              <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">{t(lang, "baseProfile")}</p>
               <div className="flex items-baseline gap-2">
                 <span className="text-2xl font-black text-white">+{insights.scoreBreakdown.base}</span>
               </div>
-              <p className="text-[10px] text-gray-400 mt-2 leading-relaxed">Identity verified.</p>
+              <p className="text-[10px] text-gray-400 mt-2 leading-relaxed">{t(lang, "identityVerified")}</p>
             </div>
             
             <div className="bg-gradient-to-br from-white/[0.04] to-transparent border border-white/5 rounded-3xl p-5 hover:bg-white/[0.06] transition-colors relative overflow-hidden group">
               <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/10 rounded-full blur-xl group-hover:bg-emerald-500/20 transition-colors" />
-              <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">Khata Activity</p>
+              <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">{t(lang, "khataActivity")}</p>
               <div className="flex items-baseline gap-2">
                 <span className="text-2xl font-black text-emerald-400">+{insights.scoreBreakdown.expense + insights.scoreBreakdown.income}</span>
               </div>
-              <p className="text-[10px] text-gray-400 mt-2 leading-relaxed">Consistent daily entries.</p>
+              <p className="text-[10px] text-gray-400 mt-2 leading-relaxed">{t(lang, "consistentEntries")}</p>
             </div>
             
             <div className="bg-gradient-to-br from-white/[0.04] to-transparent border border-white/5 rounded-3xl p-5 col-span-2 flex items-center justify-between relative overflow-hidden group">
               <div className="absolute -bottom-4 -right-4 w-32 h-32 bg-purple-500/10 rounded-full blur-2xl group-hover:bg-purple-500/20 transition-colors" />
               <div>
-                <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">Credit Reliability</p>
+                <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">{t(lang, "creditReliability")}</p>
                 <div className="flex items-baseline gap-2">
                   <span className={`text-3xl font-black ${insights.scoreBreakdown.borrowing >= 0 ? 'text-teal-400' : 'text-rose-400'}`}>
                     {insights.scoreBreakdown.borrowing > 0 ? '+' : ''}{insights.scoreBreakdown.borrowing}
@@ -242,7 +242,7 @@ export default function CreditPage() {
               </div>
               <div className="bg-black/40 rounded-xl p-3 border border-white/5 max-w-[140px]">
                 <p className="text-[10px] text-gray-300 leading-snug">
-                  Settling loans on time proves financial discipline to govt. bodies.
+                  {t(lang, "settlingLoans")}
                 </p>
               </div>
             </div>
@@ -258,9 +258,9 @@ export default function CreditPage() {
             <Lightbulb className="w-5 h-5 text-teal-300" />
           </div>
           <div>
-            <h4 className="text-sm font-bold text-teal-100 mb-1">Did you know?</h4>
+            <h4 className="text-sm font-bold text-teal-100 mb-1">{t(lang, "didYouKnow")}</h4>
             <p className="text-xs text-teal-200/80 leading-relaxed">
-              Farmers with a Readiness Score above 750 get their <strong className="text-teal-300">subsidy paperwork approved 3x faster</strong>. Keep logging your daily Khata to unlock the best schemes!
+              {t(lang, "creditAdvisoryText")}
             </p>
           </div>
         </div>
@@ -271,9 +271,9 @@ export default function CreditPage() {
         <div className="flex items-end justify-between mb-6">
           <div>
             <h3 className="text-xs font-black text-white uppercase tracking-[0.15em] flex items-center gap-2 mb-1">
-              <Landmark className="w-4 h-4 text-amber-400" /> Government Benefits
+              <Landmark className="w-4 h-4 text-amber-400" /> {t(lang, "governmentBenefits")}
             </h3>
-            <p className="text-[10px] text-gray-500 uppercase tracking-widest font-bold">Based on your Profile Readiness</p>
+            <p className="text-[10px] text-gray-500 uppercase tracking-widest font-bold">{t(lang, "basedOnReadiness")}</p>
           </div>
         </div>
 
@@ -297,8 +297,8 @@ export default function CreditPage() {
                       <div className="w-14 h-14 rounded-2xl bg-white/5 flex items-center justify-center mb-3 border border-white/10 shadow-2xl backdrop-blur-md">
                         <Lock className="w-6 h-6 text-gray-400 drop-shadow-md" />
                       </div>
-                      <p className="text-white font-black text-sm tracking-wider">Unlocks at {scheme.requiredScore} Score</p>
-                      <p className="text-xs text-gray-400 mt-1 font-medium">Keep recording to be eligible</p>
+                      <p className="text-white font-black text-sm tracking-wider">{t(lang, "unlocksAtScore").replace("{score}", scheme.requiredScore.toString())}</p>
+                      <p className="text-xs text-gray-400 mt-1 font-medium">{t(lang, "keepRecording")}</p>
                     </div>
                   )}
                   
@@ -324,7 +324,7 @@ export default function CreditPage() {
                     </div>
 
                     <div className="bg-white/[0.03] rounded-2xl p-4 border border-white/5 mb-5">
-                      <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1">Key Benefit</p>
+                      <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1">{t(lang, "keyBenefit")}</p>
                       <p className={`font-black text-lg ${isUnlocked ? 'text-teal-400' : 'text-gray-400'} drop-shadow-sm`}>{scheme.amount}</p>
                     </div>
 
@@ -332,7 +332,7 @@ export default function CreditPage() {
                       disabled={!isUnlocked}
                       className={`w-full rounded-2xl h-14 font-black text-sm flex items-center justify-center gap-3 transition-all ${isUnlocked ? 'bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-400 hover:to-emerald-400 text-white shadow-xl shadow-teal-500/20 border-t border-white/20' : 'bg-gray-800/50 text-gray-500 border border-gray-700'}`}
                     >
-                      {isUnlocked ? "Check Eligibility & Apply" : "Locked"}
+                      {isUnlocked ? t(lang, "checkEligibility") : t(lang, "lockedStatus")}
                       {isUnlocked && <ArrowRight className="w-5 h-5" />}
                     </Button>
                   </div>

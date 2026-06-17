@@ -57,9 +57,9 @@ const generateFallbackData = () => {
     const change = todayPrice - yesterdayPrice;
     const changePercentage = parseFloat(((change / yesterdayPrice) * 100).toFixed(2));
     
-    let recommendation = "Wait";
-    if (change > crop.volatility / 2) recommendation = "Sell Now";
-    else if (change < -crop.volatility / 2) recommendation = "Good Price";
+    let recommendation = "wait";
+    if (change > crop.volatility / 2) recommendation = "sell";
+    else if (change < -crop.volatility / 2) recommendation = "good";
 
     return {
       id: crop.id,
@@ -120,9 +120,9 @@ export async function GET() {
           const change = todayPrice - yesterdayPrice;
           const changePercentage = parseFloat(((change / yesterdayPrice) * 100).toFixed(2));
           
-          let recommendation = "Wait";
-          if (changePercentage > 1.5) recommendation = "Sell Now";
-          else if (changePercentage < -1.5) recommendation = "Good Price";
+          let recommendation = "wait";
+          if (changePercentage > 1.5) recommendation = "sell";
+          else if (changePercentage < -1.5) recommendation = "good";
 
           return {
             id: target.id,
@@ -152,19 +152,25 @@ export async function GET() {
   const topTrending = sortedByChange[0];
   const topLosing = sortedByChange[sortedByChange.length - 1];
 
-  let advisoryMessage = "";
-  if (topTrending.change > 20) {
-    advisoryMessage = `${topTrending.name} prices are up by ₹${topTrending.change} today. Good time to sell at the Mandi.`;
-  } else if (topLosing.change < -20) {
-    advisoryMessage = `${topLosing.name} prices dropped by ₹${Math.abs(topLosing.change)}. Wait a few days before selling.`;
-  } else {
-    advisoryMessage = `Market is steady today. No major price drops. Good day for routine Mandi visits.`;
+  let advisoryType = "stable";
+  let advisoryCropId = "";
+  let advisoryChange = 0;
+
+  if (topTrending && topTrending.change > 20) {
+    advisoryType = "up";
+    advisoryCropId = topTrending.id;
+    advisoryChange = topTrending.change;
+  } else if (topLosing && topLosing.change < -20) {
+    advisoryType = "down";
+    advisoryCropId = topLosing.id;
+    advisoryChange = Math.abs(topLosing.change);
   }
 
   return NextResponse.json(successResponse({
     advisory: {
-      message: advisoryMessage,
-      type: topTrending.change > 20 ? 'up' : topLosing.change < -20 ? 'down' : 'stable'
+      type: advisoryType,
+      cropId: advisoryCropId,
+      change: advisoryChange
     },
     commodities: commodities
   }));

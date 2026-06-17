@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useApp } from "@/context/AppContext";
+
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -31,32 +32,32 @@ const INDIAN_STATES = [
   "Delhi", "Jammu & Kashmir", "Ladakh", "Puducherry",
 ];
 
-const LAND_TYPES = [
-  { value: "owned", label: "अपनी ज़मीन (Owned)" },
-  { value: "leased", label: "किराये की ज़मीन (Leased)" },
-  { value: "ancestral", label: "पुश्तैनी ज़मीन (Ancestral)" },
+const getLandTypes = (lang: Language) => [
+  { value: "owned", label: t(lang, "landTypeOwned") },
+  { value: "leased", label: t(lang, "landTypeLeased") },
+  { value: "ancestral", label: t(lang, "landTypeAncestral") },
 ];
 
-const IRRIGATION_SOURCES = [
-  { value: "borewell", label: "बोरवेल (Borewell)" },
-  { value: "canal", label: "नहर (Canal)" },
-  { value: "rain-fed", label: "बारिश पर निर्भर (Rain-fed)" },
-  { value: "drip", label: "ड्रिप सिंचाई (Drip Irrigation)" },
-  { value: "pond", label: "तालाब (Pond/Tank)" },
+const getIrrigationSources = (lang: Language) => [
+  { value: "borewell", label: t(lang, "irrigationBorewell") },
+  { value: "canal", label: t(lang, "irrigationCanal") },
+  { value: "rain-fed", label: t(lang, "irrigationRainFed") },
+  { value: "drip", label: t(lang, "irrigationDrip") },
+  { value: "pond", label: t(lang, "irrigationPond") },
 ];
 
-const SOIL_TYPES = [
-  { value: "black", label: "काली मिट्टी (Black Soil)" },
-  { value: "red", label: "लाल मिट्टी (Red Soil)" },
-  { value: "sandy", label: "रेतीली मिट्टी (Sandy)" },
-  { value: "clay", label: "चिकनी मिट्टी (Clay)" },
-  { value: "alluvial", label: "दोमट मिट्टी (Alluvial/Loamy)" },
+const getSoilTypes = (lang: Language) => [
+  { value: "black", label: t(lang, "soilBlack") },
+  { value: "red", label: t(lang, "soilRed") },
+  { value: "sandy", label: t(lang, "soilSandy") },
+  { value: "clay", label: t(lang, "soilClay") },
+  { value: "alluvial", label: t(lang, "soilAlluvial") },
 ];
 
-const UNIT_OPTIONS = [
-  { value: "acre", label: "एकड़ (Acre)" },
-  { value: "bigha", label: "बीघा (Bigha)" },
-  { value: "hectare", label: "हेक्टेयर (Hectare)" },
+const getUnitOptions = (lang: Language) => [
+  { value: "acre", label: t(lang, "unitAcre") },
+  { value: "bigha", label: t(lang, "unitBigha") },
+  { value: "hectare", label: t(lang, "unitHectare") },
 ];
 
 // Conversion from acre to display unit
@@ -240,7 +241,7 @@ function ProfileSection() {
         setEditingField(null);
       }
     } catch (e: any) {
-      setSaveError(e?.message || "सहेजने में विफल");
+      setSaveError(e?.message || t(lang, "saveFailed"));
     } finally {
       setIsSaving(false);
     }
@@ -286,9 +287,9 @@ function ProfileSection() {
         <div className="space-y-4">
 
           <EditableField
-            label="पूरा नाम"
+            label={t(lang, "labelFullName")}
             value={user.name}
-            placeholder="अपना नाम डालें"
+            placeholder={t(lang, "phFullName")}
             icon={BadgeCheck}
             fieldKey="name"
             type="text"
@@ -301,7 +302,7 @@ function ProfileSection() {
               <Phone size={17} className="text-slate-500" strokeWidth={2} />
             </div>
             <div className="flex-1">
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">मोबाइल नंबर</p>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{t(lang, "labelMobile")}</p>
               <p className="text-sm font-semibold text-slate-800 mt-0.5">{user.phone}</p>
             </div>
             <div className="w-8 h-8 rounded-xl flex items-center justify-center">
@@ -310,9 +311,9 @@ function ProfileSection() {
           </div>
 
           <EditableField
-            label="पिन कोड (PIN Code)"
+            label={t(lang, "labelPincode")}
             value={user.pincode || ""}
-            placeholder="6 अंकों का पिन कोड"
+            placeholder={t(lang, "phPincode")}
             icon={MapPin}
             fieldKey="pincode"
             type="text"
@@ -320,18 +321,18 @@ function ProfileSection() {
           />
 
           <EditableField
-            label="जिला (District)"
+            label={t(lang, "labelDistrict")}
             value={user.district || ""}
-            placeholder="अपना जिला लिखें"
+            placeholder={t(lang, "phDistrict")}
             icon={Building2}
             fieldKey="district"
             {...fieldProps}
           />
 
           <EditableField
-            label="गाँव/कस्बा (Village)"
+            label={t(lang, "labelVillage")}
             value={user.village || ""}
-            placeholder="गाँव का नाम लिखें"
+            placeholder={t(lang, "phVillage")}
             icon={TreePine}
             fieldKey="village"
             {...fieldProps}
@@ -339,9 +340,9 @@ function ProfileSection() {
 
           <div className={`transition-all duration-200 ${editingField === "state" ? "bg-slate-50 rounded-2xl p-3 -mx-1" : ""}`}>
             <EditableField
-              label="राज्य (State)"
+              label={t(lang, "labelState")}
               value={user.state}
-              placeholder="राज्य चुनें"
+              placeholder={t(lang, "phState")}
               icon={Home}
               fieldKey="state"
               renderDisplay={(v) => v || "—"}
@@ -353,7 +354,7 @@ function ProfileSection() {
                   onValueChange={(v) => setFieldDraft(v)}
                 >
                   <SelectTrigger className="h-9 bg-white border-emerald-200 rounded-xl text-sm font-medium mt-1 focus:ring-emerald-500">
-                    <SelectValue placeholder="राज्य चुनें" />
+                    <SelectValue placeholder={t(lang, "phState")} />
                   </SelectTrigger>
                   <SelectContent className="rounded-xl max-h-60">
                     {INDIAN_STATES.map((s) => (
@@ -373,19 +374,19 @@ function ProfileSection() {
               <ScanLine size={14} className="text-orange-600" strokeWidth={2} />
             </div>
             <p className="text-sm font-bold text-slate-700">PM Kisan ID</p>
-            <span className="text-[10px] text-slate-400 font-medium bg-slate-100 px-2 py-0.5 rounded-full">वैकल्पिक</span>
+            <span className="text-[10px] text-slate-400 font-medium bg-slate-100 px-2 py-0.5 rounded-full">{t(lang, "labelOptional")}</span>
           </div>
           <EditableField
-            label="PM Kisan रजिस्ट्रेशन ID"
+            label={t(lang, "labelPmKisanId")}
             value={user.pmKisanId || ""}
-            placeholder="ID नंबर डालें (अगर है)"
+            placeholder={t(lang, "phPmKisanId")}
             icon={FileText}
             fieldKey="pmKisanId"
             {...fieldProps}
           />
           {!user.pmKisanId && (
             <p className="text-xs text-slate-400 mt-2 leading-relaxed ml-12">
-              PM Kisan ID होने पर सरकारी योजनाओं का मिलान बेहतर होगा।
+              {t(lang, "pmKisanHelpText")}
             </p>
           )}
         </div>
@@ -441,7 +442,7 @@ function FarmsManager() {
 
   const handleAddFarm = async () => {
     if (!farmName || !farmSize || !farmLocation) {
-      setFarmError("खेत का नाम, आकार और स्थान जरूरी है।");
+      setFarmError(t(lang, "errFarmInfoReq"));
       return;
     }
     setIsAddingFarm(true);
@@ -464,7 +465,7 @@ function FarmsManager() {
       setFarmLandType(""); setFarmIrrigationSource(""); setFarmSoilType("");
       await refreshFarms();
     } catch {
-      setFarmError("खेत जोड़ने में गड़बड़ी हुई। फिर कोशिश करें।");
+      setFarmError(t(lang, "errFarmAddFail"));
     } finally {
       setIsAddingFarm(false);
     }
@@ -488,7 +489,7 @@ function FarmsManager() {
       setEditingFarm(null);
       await refreshFarms();
     } catch {
-      setFarmError("खेत अपडेट करने में विफल।");
+      setFarmError(t(lang, "errFarmUpdateFail"));
     }
   };
 
@@ -509,7 +510,7 @@ function FarmsManager() {
 
   const handleAddSeason = async () => {
     if (!showAddSeasonModal?.farmId || !cropName || !startDate) {
-      setSeasonError("फसल का नाम और तारीख जरूरी है।");
+      setSeasonError(t(lang, "errSeasonInfoReq"));
       return;
     }
     setIsAddingSeason(true);
@@ -523,7 +524,7 @@ function FarmsManager() {
       setCropName("");
       await refreshFarms();
     } catch {
-      setSeasonError("फसल शुरू करने में विफल।");
+      setSeasonError(t(lang, "errSeasonAddFail"));
     } finally {
       setIsAddingSeason(false);
     }
@@ -543,7 +544,7 @@ function FarmsManager() {
     }
   };
 
-  const unitLabel = UNIT_OPTIONS.find((u) => u.value === unitPref)?.label?.split(" ")[0] || "एकड़";
+  const unitLabel = getUnitOptions(lang).find((u) => u.value === unitPref)?.label?.split(" ")[0] || "एकड़";
 
   return (
     <div>
@@ -570,8 +571,8 @@ function FarmsManager() {
             <div className="w-16 h-16 rounded-full bg-emerald-50 flex items-center justify-center mx-auto mb-4 border border-emerald-100">
               <Tractor className="w-8 h-8 text-emerald-500" strokeWidth={1.5} />
             </div>
-            <h4 className="text-slate-800 font-bold mb-1">कोई खेत नहीं</h4>
-            <p className="text-slate-500 text-sm mb-4 max-w-xs mx-auto">पहला खेत जोड़ें और खेती का हिसाब शुरू करें।</p>
+            <h4 className="text-slate-800 font-bold mb-1">{t(lang, "noFarmsFound")}</h4>
+            <p className="text-slate-500 text-sm mb-4 max-w-xs mx-auto">{t(lang, "noFarmsDesc")}</p>
             <Button onClick={() => setShowAddFarmModal(true)} className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl px-6">
               <Plus size={15} className="mr-2" /> पहला खेत जोड़ें
             </Button>
@@ -613,18 +614,18 @@ function FarmsManager() {
                         <div className="flex gap-1.5 mt-2 flex-wrap">
                           {farm.landType && (
                             <span className="text-[10px] bg-blue-50 text-blue-700 border border-blue-100 px-2 py-0.5 rounded-full font-medium">
-                              {LAND_TYPES.find(l => l.value === farm.landType)?.label?.split("(")[0]?.trim() || farm.landType}
+                              {getLandTypes(lang).find(l => l.value === farm.landType)?.label?.split("(")[0]?.trim() || farm.landType}
                             </span>
                           )}
                           {farm.irrigationSource && (
                             <span className="text-[10px] bg-sky-50 text-sky-700 border border-sky-100 px-2 py-0.5 rounded-full font-medium">
                               <Droplets size={9} className="inline mr-0.5" />
-                              {IRRIGATION_SOURCES.find(i => i.value === farm.irrigationSource)?.label?.split("(")[0]?.trim() || farm.irrigationSource}
+                              {getIrrigationSources(lang).find(i => i.value === farm.irrigationSource)?.label?.split("(")[0]?.trim() || farm.irrigationSource}
                             </span>
                           )}
                           {farm.soilType && (
                             <span className="text-[10px] bg-amber-50 text-amber-700 border border-amber-100 px-2 py-0.5 rounded-full font-medium">
-                              {SOIL_TYPES.find(s => s.value === farm.soilType)?.label?.split("(")[0]?.trim() || farm.soilType}
+                              {getSoilTypes(lang).find(s => s.value === farm.soilType)?.label?.split("(")[0]?.trim() || farm.soilType}
                             </span>
                           )}
                         </div>
@@ -657,7 +658,7 @@ function FarmsManager() {
                           <Sprout size={18} className="text-amber-600" />
                         </div>
                         <div>
-                          <p className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">चालू फसल</p>
+                          <p className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">{t(lang, "labelActiveSeason")}</p>
                           <p className="font-bold text-slate-800 text-sm">{farm.activeSeason.cropName}</p>
                           <p className="text-[10px] text-slate-500">{formatDate(farm.activeSeason.startDate)} से</p>
                         </div>
@@ -676,7 +677,7 @@ function FarmsManager() {
                     <div className="flex justify-between items-center">
                       <div className="flex items-center gap-2 text-amber-600 bg-amber-50 px-3 py-1.5 rounded-lg border border-amber-100/50">
                         <AlertTriangle size={13} strokeWidth={2.5} />
-                        <span className="text-xs font-bold">कोई फसल नहीं</span>
+                        <span className="text-xs font-bold">{t(lang, "noActiveSeason")}</span>
                       </div>
                       <Button
                         size="sm"
@@ -706,56 +707,56 @@ function FarmsManager() {
                 नया खेत जोड़ें
               </DialogTitle>
             </DialogHeader>
-            <p className="text-emerald-100 text-sm mt-1.5 opacity-90">खेत की जानकारी भरें</p>
+            <p className="text-emerald-100 text-sm mt-1.5 opacity-90">{t(lang, "modalDescAddFarm")}</p>
           </div>
           <div className="p-5 bg-white space-y-4 max-h-[60vh] overflow-y-auto">
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-600 uppercase tracking-wide">खेत का नाम *</label>
-              <Input placeholder="जैसे: घर वाला खेत" value={farmName} onChange={(e) => setFarmName(e.target.value)} className="h-11 bg-slate-50 border-slate-200 rounded-xl" />
+              <label className="text-xs font-bold text-slate-600 uppercase tracking-wide">{t(lang, "labelFarmNameStar")}</label>
+              <Input placeholder={t(lang, "egFarmName")} value={farmName} onChange={(e) => setFarmName(e.target.value)} className="h-11 bg-slate-50 border-slate-200 rounded-xl" />
             </div>
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-600 uppercase tracking-wide">क्षेत्रफल ({unitLabel}) *</label>
-              <Input type="number" placeholder="जैसे: 5" value={farmSize} onChange={(e) => setFarmSize(e.target.value)} className="h-11 bg-slate-50 border-slate-200 rounded-xl" />
+              <label className="text-xs font-bold text-slate-600 uppercase tracking-wide">{t(lang, "areaUnitStar").replace("{unitLabel}", unitLabel)}</label>
+              <Input type="number" placeholder={t(lang, "eg5Acre")} value={farmSize} onChange={(e) => setFarmSize(e.target.value)} className="h-11 bg-slate-50 border-slate-200 rounded-xl" />
             </div>
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-600 uppercase tracking-wide">गाँव / जिला *</label>
-              <VoiceInput value={farmLocation} onChange={setFarmLocation} placeholder="बोलें या टाइप करें..." theme="green" size="md" variant="inline" />
+              <label className="text-xs font-bold text-slate-600 uppercase tracking-wide">{t(lang, "villageDistrictStar")}</label>
+              <VoiceInput value={farmLocation} onChange={setFarmLocation} placeholder={t(lang, "speakOrType")} theme="green" size="md" variant="inline" />
             </div>
 
             {/* Optional detail fields */}
             <div className="pt-2 border-t border-slate-100">
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-wide mb-3">अतिरिक्त जानकारी (वैकल्पिक)</p>
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-wide mb-3">{t(lang, "additionalInfoOptional")}</p>
               <div className="space-y-3">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-600">भूमि का प्रकार</label>
+                  <label className="text-xs font-bold text-slate-600">{t(lang, "landType")}</label>
                   <Select value={farmLandType} onValueChange={setFarmLandType}>
                     <SelectTrigger className="h-11 bg-slate-50 border-slate-200 rounded-xl text-sm">
-                      <SelectValue placeholder="चुनें..." />
+                      <SelectValue placeholder={t(lang, "selectOption")} />
                     </SelectTrigger>
                     <SelectContent className="rounded-xl">
-                      {LAND_TYPES.map(l => <SelectItem key={l.value} value={l.value} className="text-sm">{l.label}</SelectItem>)}
+                      {getLandTypes(lang).map(l => <SelectItem key={l.value} value={l.value} className="text-sm">{l.label}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-600">सिंचाई का स्रोत</label>
+                  <label className="text-xs font-bold text-slate-600">{t(lang, "irrigationSource")}</label>
                   <Select value={farmIrrigationSource} onValueChange={setFarmIrrigationSource}>
                     <SelectTrigger className="h-11 bg-slate-50 border-slate-200 rounded-xl text-sm">
-                      <SelectValue placeholder="चुनें..." />
+                      <SelectValue placeholder={t(lang, "selectOption")} />
                     </SelectTrigger>
                     <SelectContent className="rounded-xl">
-                      {IRRIGATION_SOURCES.map(i => <SelectItem key={i.value} value={i.value} className="text-sm">{i.label}</SelectItem>)}
+                      {getIrrigationSources(lang).map(i => <SelectItem key={i.value} value={i.value} className="text-sm">{i.label}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-600">मिट्टी का प्रकार</label>
+                  <label className="text-xs font-bold text-slate-600">{t(lang, "soilType")}</label>
                   <Select value={farmSoilType} onValueChange={setFarmSoilType}>
                     <SelectTrigger className="h-11 bg-slate-50 border-slate-200 rounded-xl text-sm">
-                      <SelectValue placeholder="चुनें..." />
+                      <SelectValue placeholder={t(lang, "selectOption")} />
                     </SelectTrigger>
                     <SelectContent className="rounded-xl">
-                      {SOIL_TYPES.map(s => <SelectItem key={s.value} value={s.value} className="text-sm">{s.label}</SelectItem>)}
+                      {getSoilTypes(lang).map(s => <SelectItem key={s.value} value={s.value} className="text-sm">{s.label}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>
@@ -790,11 +791,11 @@ function FarmsManager() {
           {editingFarm && (
             <div className="p-5 bg-white space-y-4 max-h-[60vh] overflow-y-auto">
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-600 uppercase tracking-wide">खेत का नाम</label>
+                <label className="text-xs font-bold text-slate-600 uppercase tracking-wide">{t(lang, "farmNameLabel")}</label>
                 <Input value={editingFarm.name} onChange={(e) => setEditingFarm({ ...editingFarm, name: e.target.value })} className="h-11 bg-slate-50 border-slate-200 rounded-xl" />
               </div>
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-600 uppercase tracking-wide">क्षेत्रफल ({unitLabel})</label>
+                <label className="text-xs font-bold text-slate-600 uppercase tracking-wide">{t(lang, "areaUnit").replace("{unitLabel}", unitLabel)}</label>
                 <Input
                   type="number"
                   value={convertFromAcre(editingFarm.sizeAcre, unitPref)}
@@ -803,28 +804,28 @@ function FarmsManager() {
                 />
               </div>
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-600 uppercase tracking-wide">गाँव / जिला</label>
+                <label className="text-xs font-bold text-slate-600 uppercase tracking-wide">{t(lang, "villageDistrict")}</label>
                 <Input value={editingFarm.location} onChange={(e) => setEditingFarm({ ...editingFarm, location: e.target.value })} className="h-11 bg-slate-50 border-slate-200 rounded-xl" />
               </div>
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-600">भूमि का प्रकार</label>
+                <label className="text-xs font-bold text-slate-600">{t(lang, "landType")}</label>
                 <Select value={editingFarm.landType || ""} onValueChange={(v) => setEditingFarm({ ...editingFarm, landType: v })}>
-                  <SelectTrigger className="h-11 bg-slate-50 border-slate-200 rounded-xl text-sm"><SelectValue placeholder="चुनें..." /></SelectTrigger>
-                  <SelectContent className="rounded-xl">{LAND_TYPES.map(l => <SelectItem key={l.value} value={l.value}>{l.label}</SelectItem>)}</SelectContent>
+                  <SelectTrigger className="h-11 bg-slate-50 border-slate-200 rounded-xl text-sm"><SelectValue placeholder={t(lang, "selectOption")} /></SelectTrigger>
+                  <SelectContent className="rounded-xl">{getLandTypes(lang).map(l => <SelectItem key={l.value} value={l.value}>{l.label}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-600">सिंचाई का स्रोत</label>
+                <label className="text-xs font-bold text-slate-600">{t(lang, "irrigationSource")}</label>
                 <Select value={editingFarm.irrigationSource || ""} onValueChange={(v) => setEditingFarm({ ...editingFarm, irrigationSource: v })}>
-                  <SelectTrigger className="h-11 bg-slate-50 border-slate-200 rounded-xl text-sm"><SelectValue placeholder="चुनें..." /></SelectTrigger>
-                  <SelectContent className="rounded-xl">{IRRIGATION_SOURCES.map(i => <SelectItem key={i.value} value={i.value}>{i.label}</SelectItem>)}</SelectContent>
+                  <SelectTrigger className="h-11 bg-slate-50 border-slate-200 rounded-xl text-sm"><SelectValue placeholder={t(lang, "selectOption")} /></SelectTrigger>
+                  <SelectContent className="rounded-xl">{getIrrigationSources(lang).map(i => <SelectItem key={i.value} value={i.value}>{i.label}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-600">मिट्टी का प्रकार</label>
+                <label className="text-xs font-bold text-slate-600">{t(lang, "soilType")}</label>
                 <Select value={editingFarm.soilType || ""} onValueChange={(v) => setEditingFarm({ ...editingFarm, soilType: v })}>
-                  <SelectTrigger className="h-11 bg-slate-50 border-slate-200 rounded-xl text-sm"><SelectValue placeholder="चुनें..." /></SelectTrigger>
-                  <SelectContent className="rounded-xl">{SOIL_TYPES.map(s => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}</SelectContent>
+                  <SelectTrigger className="h-11 bg-slate-50 border-slate-200 rounded-xl text-sm"><SelectValue placeholder={t(lang, "selectOption")} /></SelectTrigger>
+                  <SelectContent className="rounded-xl">{getSoilTypes(lang).map(s => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
               <Button className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold shadow-md active:scale-[0.98] transition-all" onClick={handleEditFarm}>
@@ -849,16 +850,16 @@ function FarmsManager() {
               </DialogTitle>
             </DialogHeader>
             <p className="text-amber-50 text-sm mt-1.5 opacity-90 relative z-10">
-              <strong>{showAddSeasonModal?.farmName}</strong> में नई फसल
+              <strong>{showAddSeasonModal?.farmName}</strong> {t(lang, "newSeasonIn")}
             </p>
           </div>
           <div className="p-5 bg-white space-y-4">
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-600 uppercase tracking-wide">फसल का नाम *</label>
-              <VoiceInput value={cropName} onChange={setCropName} placeholder="फसल का नाम बोलें या लिखें..." theme="orange" size="md" variant="inline" />
+              <label className="text-xs font-bold text-slate-600 uppercase tracking-wide">{t(lang, "cropNameStar")}</label>
+              <VoiceInput value={cropName} onChange={setCropName} placeholder={t(lang, "speakOrTypeCrop")} theme="orange" size="md" variant="inline" />
             </div>
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-600 uppercase tracking-wide">बुवाई की तारीख *</label>
+              <label className="text-xs font-bold text-slate-600 uppercase tracking-wide">{t(lang, "sowingDateStar")}</label>
               <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="h-11 bg-slate-50 border-slate-200 rounded-xl" />
             </div>
             {seasonError && (
@@ -880,13 +881,13 @@ function FarmsManager() {
             <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4 border border-red-100">
               <Trash2 className="w-8 h-8 text-red-500" />
             </div>
-            <h3 className="font-black text-lg text-slate-800 mb-2">खेत हटाएं?</h3>
+            <h3 className="font-black text-lg text-slate-800 mb-2">{t(lang, "modalTitleDeleteFarm")}</h3>
             <p className="text-slate-500 text-sm mb-6 leading-relaxed">
-              <strong>{confirmDeleteFarm?.name}</strong> और उससे जुड़ा सारा डेटा (फसलें, खर्चे, आमदनी) हमेशा के लिए मिट जाएगा।
+              <strong>{confirmDeleteFarm?.name}</strong> {t(lang, "deleteFarmWarning")}
             </p>
             <div className="flex gap-3">
-              <Button variant="outline" className="flex-1 rounded-xl" onClick={() => setConfirmDeleteFarm(null)}>रद्द करें</Button>
-              <Button className="flex-1 bg-red-600 hover:bg-red-700 text-white rounded-xl" onClick={handleDeleteFarm}>हाँ, हटाएं</Button>
+              <Button variant="outline" className="flex-1 rounded-xl" onClick={() => setConfirmDeleteFarm(null)}>{t(lang, "btnCancel")}</Button>
+              <Button className="flex-1 bg-red-600 hover:bg-red-700 text-white rounded-xl" onClick={handleDeleteFarm}>{t(lang, "yesDelete")}</Button>
             </div>
           </div>
         </DialogContent>
@@ -899,13 +900,13 @@ function FarmsManager() {
             <div className="w-16 h-16 bg-amber-50 rounded-full flex items-center justify-center mx-auto mb-4 border border-amber-100">
               <CheckCircle2 className="w-8 h-8 text-amber-500" />
             </div>
-            <h3 className="font-black text-lg text-slate-800 mb-2">फसल पूरी करें?</h3>
+            <h3 className="font-black text-lg text-slate-800 mb-2">{t(lang, "modalTitleCompleteSeason")}</h3>
             <p className="text-slate-500 text-sm mb-6 leading-relaxed">
-              <strong>{confirmCompleteSeason?.cropName}</strong> की फसल को पूर्ण मार्क करेंगे। बाद में नई फसल शुरू कर सकते हैं।
+              <strong>{confirmCompleteSeason?.cropName}</strong> {t(lang, "msgCompleteSeasonDesc")} {t(lang, "newSeasonIn")} शुरू कर सकते हैं।
             </p>
             <div className="flex gap-3">
-              <Button variant="outline" className="flex-1 rounded-xl" onClick={() => setConfirmCompleteSeason(null)}>रद्द करें</Button>
-              <Button className="flex-1 bg-amber-500 hover:bg-amber-600 text-white rounded-xl" onClick={handleCompleteSeason}>हाँ, पूरी करें</Button>
+              <Button variant="outline" className="flex-1 rounded-xl" onClick={() => setConfirmCompleteSeason(null)}>{t(lang, "btnCancel")}</Button>
+              <Button className="flex-1 bg-amber-500 hover:bg-amber-600 text-white rounded-xl" onClick={handleCompleteSeason}>{t(lang, "yesComplete")}</Button>
             </div>
           </div>
         </DialogContent>
@@ -916,6 +917,8 @@ function FarmsManager() {
 
 // ─── Kisan Score Widget ─────────────────────────────────────────────────────
 function KisanScoreWidget() {
+  const { language } = useApp();
+  const lang = language || "hi";
   const { apiCall, activeFarm } = useApp();
   const router = useRouter();
   const [score, setScore] = useState<number | null>(null);
@@ -949,7 +952,7 @@ function KisanScoreWidget() {
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between mb-1.5">
-            <p className="text-sm font-bold text-slate-800">किसान ट्रस्ट स्कोर</p>
+            <p className="text-sm font-bold text-slate-800">{t(lang, "kisanTrustScore")}</p>
             <div className="flex items-center gap-1.5">
               <span className={`text-xl font-black ${scoreColor}`}>{score ?? "—"}</span>
               <span className="text-xs text-slate-400 font-medium">/850</span>
@@ -984,6 +987,8 @@ function Toggle({ enabled, onToggle }: { enabled: boolean; onToggle: () => void 
 
 // ─── Notifications Section ─────────────────────────────────────────────────────
 function NotificationsSection() {
+  const { language } = useApp();
+  const lang = language || "hi";
   const [prefs, setPrefs] = useState<NotifPrefs>(() => {
     if (typeof window === "undefined") return NOTIF_DEFAULTS;
     try {
@@ -1006,40 +1011,40 @@ function NotificationsSection() {
       icon: BarChart3,
       iconBg: "bg-emerald-50",
       iconColor: "text-emerald-600",
-      title: "मंडी भाव अलर्ट",
-      desc: "फसल की कीमत में बड़ा बदलाव होने पर सूचना",
+      title: t(lang, "notifMandiTitle"),
+      desc: t(lang, "notifMandiDesc"),
     },
     {
       key: "weather" as keyof NotifPrefs,
       icon: Droplets,
       iconBg: "bg-sky-50",
       iconColor: "text-sky-600",
-      title: "मौसम चेतावनी",
-      desc: "बारिश या गर्मी की चेतावनी मिलने पर अलर्ट",
+      title: t(lang, "notifWeatherTitle"),
+      desc: t(lang, "notifWeatherDesc"),
     },
     {
       key: "borrowing" as keyof NotifPrefs,
       icon: HandCoins,
       iconBg: "bg-orange-50",
       iconColor: "text-orange-600",
-      title: "उधार याद दिलाना",
-      desc: "उधार की तारीख से 3 दिन पहले रिमाइंडर",
+      title: t(lang, "notifDebtTitle"),
+      desc: t(lang, "notifDebtDesc"),
     },
     {
       key: "daily" as keyof NotifPrefs,
       icon: Wheat,
       iconBg: "bg-amber-50",
       iconColor: "text-amber-600",
-      title: "दैनिक काम रिमाइंडर",
-      desc: "शाम 6 बजे: 'आज का काम लिखा?' रिमाइंडर",
+      title: t(lang, "notifDailyTitle"),
+      desc: t(lang, "notifDailyDesc"),
     },
     {
       key: "stock" as keyof NotifPrefs,
       icon: Package,
       iconBg: "bg-violet-50",
       iconColor: "text-violet-600",
-      title: "भंडार कम होने का अलर्ट",
-      desc: "बीज, खाद या दवाई का स्टॉक कम होने पर",
+      title: t(lang, "notifStockTitle"),
+      desc: t(lang, "notifStockDesc"),
     },
   ];
 
@@ -1069,6 +1074,7 @@ function NotificationsSection() {
 // ─── Language & Units Section ──────────────────────────────────────────────────
 function LanguageUnitsSection() {
   const { language, setLanguage } = useApp();
+  const lang = language || "hi";
 
   const [unitPref, setUnitPrefState] = useState<string>(() => {
     if (typeof window !== "undefined") return localStorage.getItem("kisan_unit_pref") || "acre";
@@ -1089,8 +1095,8 @@ function LanguageUnitsSection() {
               <Globe size={20} className="text-blue-600" strokeWidth={2} />
             </div>
             <div>
-              <p className="text-sm font-bold text-slate-800">भाषा / Language</p>
-              <p className="text-xs text-slate-500">ऐप की भाषा बदलें</p>
+              <p className="text-sm font-bold text-slate-800">{t(lang, "languageSettings")}</p>
+              <p className="text-xs text-slate-500">{t(lang, "changeAppLanguage")}</p>
             </div>
           </div>
           <Select value={language} onValueChange={(val) => setLanguage(val as Language)}>
@@ -1113,8 +1119,8 @@ function LanguageUnitsSection() {
               <Wheat size={20} className="text-amber-600" strokeWidth={2} />
             </div>
             <div>
-              <p className="text-sm font-bold text-slate-800">ज़मीन की इकाई / Land Unit</p>
-              <p className="text-xs text-slate-500">एकड़, बीघा या हेक्टेयर चुनें</p>
+              <p className="text-sm font-bold text-slate-800">{t(lang, "landUnitSettings")}</p>
+              <p className="text-xs text-slate-500">{t(lang, "chooseAcreBigha")}</p>
             </div>
           </div>
           <Select value={unitPref} onValueChange={handleUnitChange}>
@@ -1122,7 +1128,7 @@ function LanguageUnitsSection() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent className="rounded-xl border-slate-100 shadow-lg">
-              {UNIT_OPTIONS.map((u) => (
+              {getUnitOptions(lang).map((u) => (
                 <SelectItem key={u.value} value={u.value} className="font-medium focus:bg-emerald-50 focus:text-emerald-700 rounded-lg">
                   {u.label}
                 </SelectItem>
@@ -1130,7 +1136,7 @@ function LanguageUnitsSection() {
             </SelectContent>
           </Select>
           <p className="text-[11px] text-slate-400 mt-2 ml-1">
-            सभी खेतों का आकार चुनी हुई इकाई में दिखेगा।
+            {t(lang, "unitPreferenceDesc")}
           </p>
         </div>
       </div>
@@ -1140,6 +1146,8 @@ function LanguageUnitsSection() {
 
 // ─── Security Section ─────────────────────────────────────────────────────────
 function SecuritySection() {
+  const { language } = useApp();
+  const lang = language || "hi";
   const { apiCall } = useApp();
   const [showChangePinModal, setShowChangePinModal] = useState(false);
   const [currentPin, setCurrentPin] = useState("");
@@ -1152,8 +1160,8 @@ function SecuritySection() {
   const [pinSuccess, setPinSuccess] = useState(false);
 
   const handleChangePin = async () => {
-    if (newPin !== confirmPin) { setPinError("नया PIN दोनों में एक जैसा होना चाहिए।"); return; }
-    if (newPin.length < 4) { setPinError("PIN कम से कम 4 अंकों का होना चाहिए।"); return; }
+    if (newPin !== confirmPin) { setPinError(t(lang, "errPinMismatch")); return; }
+    if (newPin.length < 4) { setPinError(t(lang, "errPinLength")); return; }
     setIsChanging(true);
     setPinError("");
     try {
@@ -1168,7 +1176,7 @@ function SecuritySection() {
         setCurrentPin(""); setNewPin(""); setConfirmPin("");
       }, 1500);
     } catch (e: any) {
-      setPinError(e?.message || "PIN बदलने में विफल।");
+      setPinError(e?.message || t(lang, "errPinChangeFail"));
     } finally {
       setIsChanging(false);
     }
@@ -1187,8 +1195,8 @@ function SecuritySection() {
                 <KeyRound size={20} className="text-purple-600" strokeWidth={2} />
               </div>
               <div>
-                <p className="text-sm font-bold text-slate-800">PIN बदलें</p>
-                <p className="text-xs text-slate-500">अपना लॉगिन PIN अपडेट करें</p>
+                <p className="text-sm font-bold text-slate-800">{t(lang, "changePin")}</p>
+                <p className="text-xs text-slate-500">{t(lang, "updateLoginPin")}</p>
               </div>
             </div>
             <ChevronRight size={18} className="text-slate-300 group-hover:text-slate-500 group-hover:translate-x-0.5 transition-all" />
@@ -1200,7 +1208,7 @@ function SecuritySection() {
                 <Lock size={20} className="text-emerald-600" strokeWidth={2} />
               </div>
               <div>
-                <p className="text-sm font-bold text-slate-800">डेटा सुरक्षा</p>
+                <p className="text-sm font-bold text-slate-800">{t(lang, "dataSecurity")}</p>
                 <p className="text-xs text-emerald-600 font-semibold flex items-center gap-1">
                   <ShieldCheck size={11} /> एन्क्रिप्टेड और सुरक्षित
                 </p>
@@ -1223,7 +1231,7 @@ function SecuritySection() {
                 PIN बदलें
               </DialogTitle>
             </DialogHeader>
-            <p className="text-purple-100 text-sm mt-1.5 opacity-90">4–6 अंकों का नया PIN सेट करें</p>
+            <p className="text-purple-100 text-sm mt-1.5 opacity-90">{t(lang, "setNewPinInstruction")}</p>
           </div>
           <div className="p-5 bg-white space-y-4">
             {pinSuccess ? (
@@ -1231,19 +1239,19 @@ function SecuritySection() {
                 <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mb-3">
                   <CheckCircle2 className="w-8 h-8 text-emerald-600" />
                 </div>
-                <p className="font-bold text-slate-800">PIN सफलतापूर्वक बदल गया!</p>
+                <p className="font-bold text-slate-800">{t(lang, "pinChangedSuccess")}</p>
               </div>
             ) : (
               <>
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-600 uppercase tracking-wide">मौजूदा PIN</label>
+                  <label className="text-xs font-bold text-slate-600 uppercase tracking-wide">{t(lang, "currentPinLabel")}</label>
                   <div className="relative">
                     <Input
                       type={showCurrent ? "text" : "password"}
                       maxLength={6}
                       value={currentPin}
                       onChange={(e) => setCurrentPin(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                      placeholder="मौजूदा PIN डालें"
+                      placeholder={t(lang, "currentPinPlaceholder")}
                       className="h-11 bg-slate-50 border-slate-200 rounded-xl pr-12"
                     />
                     <button onClick={() => setShowCurrent(!showCurrent)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">
@@ -1252,14 +1260,14 @@ function SecuritySection() {
                   </div>
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-600 uppercase tracking-wide">नया PIN</label>
+                  <label className="text-xs font-bold text-slate-600 uppercase tracking-wide">{t(lang, "newPinLabel")}</label>
                   <div className="relative">
                     <Input
                       type={showNew ? "text" : "password"}
                       maxLength={6}
                       value={newPin}
                       onChange={(e) => setNewPin(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                      placeholder="4–6 अंकों का PIN"
+                      placeholder={t(lang, "newPinPlaceholder")}
                       className="h-11 bg-slate-50 border-slate-200 rounded-xl pr-12"
                     />
                     <button onClick={() => setShowNew(!showNew)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">
@@ -1268,13 +1276,13 @@ function SecuritySection() {
                   </div>
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-600 uppercase tracking-wide">PIN दोबारा लिखें</label>
+                  <label className="text-xs font-bold text-slate-600 uppercase tracking-wide">{t(lang, "confirmPinLabel")}</label>
                   <Input
                     type="password"
                     maxLength={6}
                     value={confirmPin}
                     onChange={(e) => setConfirmPin(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                    placeholder="नया PIN फिर लिखें"
+                    placeholder={t(lang, "confirmPinPlaceholder")}
                     className={`h-11 bg-slate-50 border-slate-200 rounded-xl ${confirmPin && newPin !== confirmPin ? "border-red-300" : ""}`}
                   />
                 </div>
@@ -1301,6 +1309,8 @@ function SecuritySection() {
 
 // ─── Help Section ────────────────────────────────────────────────────────────
 function HelpSection() {
+  const { language } = useApp();
+  const lang = language || "hi";
   const router = useRouter();
 
   const handleHelpClick = (item: any) => {
@@ -1314,10 +1324,10 @@ function HelpSection() {
   };
 
   const ITEMS = [
-    { icon: HelpCircle, bg: "bg-amber-50", color: "text-amber-600", title: "सहायता और सपोर्ट", desc: "WhatsApp पर मदद लें", href: "https://wa.me/918077170715?text=मुझे+किसान+डायरी+ऐप+के+बारे+में+सहायता+चाहिए", external: true },
-    { icon: Shield, bg: "bg-emerald-50", color: "text-emerald-600", title: "प्राइवेसी पॉलिसी", desc: "आपके डेटा की सुरक्षा के बारे में", href: "/app/privacy", external: false },
-    { icon: FileText, bg: "bg-blue-50", color: "text-blue-600", title: "उपयोग की शर्तें", desc: "Terms & Conditions", href: "/app/terms", external: false },
-    { icon: Info, bg: "bg-slate-50", color: "text-slate-600", title: "किसान स्कोर के बारे में", desc: "स्कोर कैसे काम करता है?", href: "/app/credit", external: false },
+    { icon: HelpCircle, bg: "bg-amber-50", color: "text-amber-600", title: t(lang, "helpSupport"), desc: t(lang, "helpWhatsApp"), href: "https://wa.me/918077170715?text=मुझे+किसान+डायरी+ऐप+के+बारे+में+सहायता+चाहिए", external: true },
+    { icon: Shield, bg: "bg-emerald-50", color: "text-emerald-600", title: t(lang, "privacyPolicy"), desc: t(lang, "privacyDesc"), href: "/app/privacy", external: false },
+    { icon: FileText, bg: "bg-blue-50", color: "text-blue-600", title: t(lang, "termsConditions"), desc: "Terms & Conditions", href: "/app/terms", external: false },
+    { icon: Info, bg: "bg-slate-50", color: "text-slate-600", title: t(lang, "aboutKisanScore"), desc: t(lang, "howScoreWorks"), href: "/app/credit", external: false },
   ];
 
   return (
@@ -1362,8 +1372,8 @@ export default function SettingsPage() {
         <div className="w-20 h-20 bg-white rounded-2xl shadow-sm border border-slate-100 flex items-center justify-center mb-6">
           <Settings className="w-10 h-10 text-slate-400" strokeWidth={1.5} />
         </div>
-        <h2 className="text-2xl font-black text-slate-800 mb-2">लॉगिन आवश्यक है</h2>
-        <p className="text-slate-500 text-center mb-8 max-w-xs">सेटिंग्स देखने के लिए लॉगिन करें।</p>
+        <h2 className="text-2xl font-black text-slate-800 mb-2">{t(lang, "loginRequired")}</h2>
+        <p className="text-slate-500 text-center mb-8 max-w-xs">{t(lang, "loginToViewSettings")}</p>
         <Button className="h-12 px-8 rounded-xl bg-emerald-600 text-white font-bold" onClick={() => router.push("/login")}>
           🔑 {t(lang, "login")}
         </Button>
@@ -1385,7 +1395,7 @@ export default function SettingsPage() {
           </div>
           <div>
             <h1 className="text-white text-2xl font-black tracking-tight">{t(lang, "settings")}</h1>
-            <p className="text-emerald-200/70 text-sm font-medium">खाता और प्राथमिकताएं</p>
+            <p className="text-emerald-200/70 text-sm font-medium">{t(lang, "accountAndPreferences")}</p>
           </div>
         </div>
       </div>
@@ -1397,37 +1407,37 @@ export default function SettingsPage() {
 
         {/* 2. Kisan Score Widget */}
         <div>
-          <SectionLabel>किसान स्कोर (Kisan Score)</SectionLabel>
+          <SectionLabel>{t(lang, "kisanScoreSection")}</SectionLabel>
           <KisanScoreWidget />
         </div>
 
         {/* 3. My Farms */}
         <div>
-          <SectionLabel>मेरे खेत (My Farms)</SectionLabel>
+          <SectionLabel>{t(lang, "myFarmsSection")}</SectionLabel>
           <FarmsManager />
         </div>
 
         {/* 4. Notifications */}
         <div>
-          <SectionLabel>सूचनाएं (Notifications)</SectionLabel>
+          <SectionLabel>{t(lang, "notificationsSection")}</SectionLabel>
           <NotificationsSection />
         </div>
 
         {/* 5. Language & Units */}
         <div>
-          <SectionLabel>भाषा और इकाई (Language & Units)</SectionLabel>
+          <SectionLabel>{t(lang, "languageAndUnitSection")}</SectionLabel>
           <LanguageUnitsSection />
         </div>
 
         {/* 6. Security */}
         <div>
-          <SectionLabel>खाता सुरक्षा (Security)</SectionLabel>
+          <SectionLabel>{t(lang, "securitySection")}</SectionLabel>
           <SecuritySection />
         </div>
 
         {/* 7. Help & Info */}
         <div>
-          <SectionLabel>सहायता (Help & Info)</SectionLabel>
+          <SectionLabel>{t(lang, "helpSection")}</SectionLabel>
           <HelpSection />
         </div>
 
@@ -1442,7 +1452,7 @@ export default function SettingsPage() {
           </Button>
           <div className="flex flex-col items-center mt-7 space-y-1">
             <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Kisan Diary</p>
-            <p className="text-[10px] font-medium text-slate-400">संस्करण 1.0.0 · Enterprise Edition</p>
+            <p className="text-[10px] font-medium text-slate-400">{t(lang, "appVersion")}</p>
           </div>
         </div>
 

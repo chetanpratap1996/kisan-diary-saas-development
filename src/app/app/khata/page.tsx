@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useApp } from "@/context/AppContext";
+
 import { t, TranslationKey } from "@/lib/translations";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { AddExpenseModal } from "@/components/modals/AddExpenseModal";
@@ -165,7 +166,7 @@ export default function KhataPage() {
                   <Sprout className="w-10 h-10 text-emerald-500" strokeWidth={1.5} />
                </div>
                <h3 className="text-xl font-bold text-slate-800 mb-2">अभी तक कोई रिकॉर्ड नहीं</h3>
-               <p className="text-slate-500 font-medium leading-relaxed mb-8">अपना पहला खर्च या आमदनी दर्ज करके अपना बहीखाता शुरू करें।</p>
+               <p className="text-slate-500 font-medium leading-relaxed mb-8">{t(lang, "startKhataPrompt")}</p>
                <div className="flex justify-center gap-4">
                   <div className="bg-rose-50 p-3 rounded-2xl animate-bounce shadow-sm">
                      <ArrowDownCircle className="w-7 h-7 text-rose-500" strokeWidth={2} />
@@ -210,7 +211,7 @@ export default function KhataPage() {
                                 </p>
                                 <div className="mt-1 bg-slate-50 px-2.5 py-1 rounded-full border border-slate-100">
                                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest flex items-center gap-1">
-                                      Bal: <span className="text-slate-700">{formatCurrency(entry.runningBalance)}</span>
+                                      {t(lang, "balancePrefix")} <span className="text-slate-700">{formatCurrency(entry.runningBalance)}</span>
                                    </p>
                                 </div>
                              </div>
