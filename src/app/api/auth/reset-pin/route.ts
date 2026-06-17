@@ -48,7 +48,16 @@ export async function POST(request: NextRequest) {
       const rows = await db.select().from(users).where(eq(users.phone, phone)).limit(1);
 
       if (rows.length === 0) {
-         return NextResponse.json(errorResponse("यह नंबर पंजीकृत नहीं है।"), { status: 404 });
+        // Auto-register the user if they don't exist, since they verified OTP
+        await db.insert(users).values({
+          phone,
+          username: `ph_${phone}`,
+          passwordHash: newPinHash,
+          name: "किसान भाई",
+          state: "India",
+          language: "hi",
+        });
+        return NextResponse.json(successResponse(null, "आपका PIN सफलतापूर्वक सेट कर दिया गया है।"));
       }
 
       await db
@@ -62,7 +71,16 @@ export async function POST(request: NextRequest) {
     // ── Local-file (dev / no-DB) path ─────────────
     const existingUser = await localFindUserByPhone(phone);
     if (!existingUser) {
-        return NextResponse.json(errorResponse("यह नंबर पंजीकृत नहीं है।"), { status: 404 });
+        const { localCreateUser } = await import("@/lib/local-auth-store");
+        await localCreateUser({
+          phone,
+          username: `ph_${phone}`,
+          passwordHash: newPinHash,
+          name: "किसान भाई",
+          state: "India",
+          language: "hi",
+        });
+        return NextResponse.json(successResponse(null, "आपका PIN सफलतापूर्वक सेट कर दिया गया है।"));
     }
 
     await localUpdateUser(existingUser.id, { passwordHash: newPinHash });
