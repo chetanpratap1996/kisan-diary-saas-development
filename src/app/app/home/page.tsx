@@ -65,14 +65,7 @@ const NEARBY_CROPS = [
   { name: "आलू",    emoji: "🥔", price: 1080, change: -40  },
 ];
 
-const WISDOM_QUOTES = [
-  "जो किसान मेहनत करे, धरती उसे सोना दे।",
-  "बीज छोटा होता है, पर सोच बड़ी रखो।",
-  "हर बूंद पानी कीमती है, हर दाना अनमोल।",
-  "खेत की मिट्टी से जुड़े रहो, वो कभी धोखा नहीं देती।",
-  "सुबह का काम शाम को फल देता है।",
-  "किसान की मेहनत ही देश की ताकत है।",
-];
+const WISDOM_QUOTES: TranslationKey[] = ["quote1", "quote2", "quote3", "quote4", "quote5", "quote6"];
 
 // Crop emojis based on crop name keywords
 function getCropEmoji(cropName: string): string {
@@ -786,7 +779,7 @@ export default function HomePage() {
             {/* Badge */}
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-green-500/15 border border-green-500/25 text-green-400 text-[10px] font-black tracking-widest uppercase mb-4">
               <span className="flex h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse" />
-              AI Assistant
+              {t(lang, "aiAssistantBadge" as TranslationKey)}
             </div>
 
             <div className="flex items-start gap-4">
@@ -1084,7 +1077,7 @@ export default function HomePage() {
             {t(lang, "farmersWisdom")}
           </p>
           <p className="text-green-800 font-semibold text-sm leading-relaxed relative z-10 transition-all duration-500">
-            "{WISDOM_QUOTES[quoteIdx]}"
+            "{t(lang, WISDOM_QUOTES[quoteIdx])}"
           </p>
           {/* Dot indicators */}
           <div className="flex justify-center gap-1.5 mt-3">

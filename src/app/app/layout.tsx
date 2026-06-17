@@ -12,8 +12,8 @@ import { t } from "@/lib/translations";
 const navItems = [
   { href: "/app/home",     icon: Home,      labelKey: "home"     as const, fallback: "घर"    },
   { href: "/app/khata",    icon: BookText,  labelKey: "khata"    as const, fallback: "हिसाब"  },
-  { href: "/app/market",   icon: Store,     labelKey: "market"   as any,   fallback: "मंडी"   },
-  { href: "/app/credit",   icon: CreditCard,labelKey: "credit"   as any,   fallback: "ऋण"    },
+  { href: "/app/market",   icon: Store,     labelKey: "market"   as const,   fallback: "मंडी"   },
+  { href: "/app/credit",   icon: CreditCard,labelKey: "credit"   as const,   fallback: "ऋण"    },
   { href: "/app/settings", icon: User,      labelKey: "settings" as const, fallback: "प्रोफ़ाइल" },
 ];
 
@@ -42,13 +42,13 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         <div className="bg-green-600 text-white text-xs flex items-center justify-between px-4 py-2 sticky top-0 z-50 shadow-md">
           <div className="flex items-center gap-2">
             <Image src="/logo.jpg" alt="Kisan Diary" width={24} height={24} className="rounded-full" />
-            <span className="font-semibold">किसान डायरी — बिना लॉगिन के देखें</span>
+            <span className="font-semibold">{t(lang, "guestModeView")}</span>
           </div>
           <Link
             href="/login"
             className="bg-white text-green-700 font-semibold px-3 py-1 rounded-full text-xs"
           >
-            🔑 लॉगिन / साइन अप
+            {t(lang, "loginSignupBtn")}
           </Link>
         </div>
       )}

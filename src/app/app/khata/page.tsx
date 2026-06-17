@@ -165,7 +165,7 @@ export default function KhataPage() {
                <div className="w-20 h-20 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-5 shadow-inner">
                   <Sprout className="w-10 h-10 text-emerald-500" strokeWidth={1.5} />
                </div>
-               <h3 className="text-xl font-bold text-slate-800 mb-2">अभी तक कोई रिकॉर्ड नहीं</h3>
+               <h3 className="text-xl font-bold text-slate-800 mb-2">{t(lang, "noRecordsYet" as TranslationKey)}</h3>
                <p className="text-slate-500 font-medium leading-relaxed mb-8">{t(lang, "startKhataPrompt")}</p>
                <div className="flex justify-center gap-4">
                   <div className="bg-rose-50 p-3 rounded-2xl animate-bounce shadow-sm">
@@ -231,13 +231,13 @@ export default function KhataPage() {
               onClick={() => setShowExpenseModal(true)}
               className="flex-1 h-16 rounded-[1.5rem] bg-rose-50 hover:bg-rose-100 text-rose-700 font-extrabold shadow-sm active:scale-[0.98] transition-all border border-rose-200 gap-2 text-[15px]"
             >
-               <div className="bg-white p-2 rounded-xl shadow-sm"><Minus className="w-5 h-5 text-rose-600" strokeWidth={3} /></div> खर्च
+               <div className="bg-white p-2 rounded-xl shadow-sm"><Minus className="w-5 h-5 text-rose-600" strokeWidth={3} /></div> {t(lang, "expenseLabel" as TranslationKey)}
             </Button>
             <Button 
               onClick={() => setShowIncomeModal(true)}
               className="flex-1 h-16 rounded-[1.5rem] bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold shadow-lg shadow-emerald-600/30 active:scale-[0.98] transition-all gap-2 border border-emerald-500 text-[15px]"
             >
-               <div className="bg-emerald-500 p-2 rounded-xl border border-emerald-400"><Plus className="w-5 h-5 text-white" strokeWidth={3} /></div> आमदनी
+               <div className="bg-emerald-500 p-2 rounded-xl border border-emerald-400"><Plus className="w-5 h-5 text-white" strokeWidth={3} /></div> {t(lang, "incomeLabel" as TranslationKey)}
             </Button>
          </div>
       </div>
