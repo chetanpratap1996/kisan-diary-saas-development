@@ -30,6 +30,13 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="hi">
       <body className={`${inter.variable} ${notoSansDevanagari.variable} bg-gray-50 text-gray-900 antialiased`}>
+        <script dangerouslySetInnerHTML={{ __html: `
+          window.deferredPrompt = null;
+          window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            window.deferredPrompt = e;
+          });
+        `}} />
         <SmoothScroll>
           <AppProvider>
             {children}

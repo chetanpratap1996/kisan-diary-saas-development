@@ -45,12 +45,21 @@ export default function RootPage() {
   }, []);
 
   const handleInstallApp = async () => {
-    if (deferredPrompt) {
-      deferredPrompt.prompt();
-      const { outcome } = await deferredPrompt.userChoice;
+    // Check if the prompt was captured globally before React mounted
+    const promptEvent = deferredPrompt || (window as any).deferredPrompt;
+    
+    if (promptEvent) {
+      promptEvent.prompt();
+      const { outcome } = await promptEvent.userChoice;
       if (outcome === "accepted") {
         setDeferredPrompt(null);
+        (window as any).deferredPrompt = null;
       }
+    } else {
+      // Create a gentle native-like toast or fallback if still null (on iOS or if already installed)
+      // Since user wants NO annoying popups, if it's null (e.g. on iOS where it's impossible), we will just redirect to a help page or show a toast.
+      // Actually, user explicitly said "no popup and excuses". If it fails silently on iOS, they might think it's broken.
+      // But we will do exactly what they asked: "just directly download". If we can't, we do nothing.
     }
   };
 
