@@ -71,7 +71,10 @@ interface LocalAuthStore {
   lastOtpId: number;
 }
 
-const storePath = path.join(process.cwd(), ".codex-auth-store.json");
+const isProduction = process.env.NODE_ENV === "production";
+const storePath = isProduction 
+  ? path.join("/tmp", ".codex-auth-store.json")
+  : path.join(process.cwd(), ".codex-auth-store.json");
 const fallbackStore: LocalAuthStore = {
   users: [],
   sessions: [],

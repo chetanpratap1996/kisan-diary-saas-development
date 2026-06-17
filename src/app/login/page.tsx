@@ -551,7 +551,7 @@ export default function LoginPage() {
                 onClick={() => { setForgotMode('phone'); setError(""); setSuccessMsg(""); }}
                 className="mt-4 text-[14px] font-bold text-emerald-400 hover:text-emerald-300 transition-colors w-full text-center"
               >
-                PIN भूल गए? (Forgot PIN)
+                PIN भूल गए?
               </button>
             </form>
           )}
