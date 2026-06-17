@@ -17,7 +17,8 @@ import {
   ArrowRight,
   Globe2,
   Sparkles,
-  Play
+  Play,
+  Download
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -26,10 +27,32 @@ export default function RootPage() {
   const { user, isLoading, language } = useApp();
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
 
   useEffect(() => {
     setMounted(true);
+
+    const handleBeforeInstallPrompt = (e: any) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+
+    window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+
+    return () => {
+      window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+    };
   }, []);
+
+  const handleInstallApp = async () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === "accepted") {
+        setDeferredPrompt(null);
+      }
+    }
+  };
 
   const handleActionClick = () => {
     if (!isLoading) {
@@ -69,6 +92,16 @@ export default function RootPage() {
                 {language === "en" ? "हिंदी" : "English"}
               </button>
             </div>
+            {mounted && deferredPrompt && (
+              <Button 
+                onClick={handleInstallApp} 
+                variant="outline"
+                className="hidden md:flex items-center gap-2 border-green-600 text-green-700 hover:bg-green-50 rounded-full px-4 shadow-sm transition-all"
+              >
+                <Download className="w-4 h-4" />
+                Download App
+              </Button>
+            )}
             {mounted && (
               <Button 
                 onClick={handleActionClick} 
@@ -120,6 +153,16 @@ export default function RootPage() {
               <Play className="w-4 h-4" strokeWidth={2} fill="currentColor" />
               {t(language, "viewDemo" as TranslationKey)}
             </Button>
+            {deferredPrompt && (
+              <Button 
+                size="lg" 
+                onClick={handleInstallApp} 
+                className="bg-black hover:bg-gray-800 text-white rounded-full px-8 h-14 text-lg w-full sm:w-auto shadow-xl transition-all flex items-center gap-2"
+              >
+                <Download className="w-5 h-5" />
+                Download App
+              </Button>
+            )}
           </div>
         </div>
       </section>

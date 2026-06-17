@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 import { Inter, Noto_Sans_Devanagari } from "next/font/google";
 import { AppProvider } from "@/context/AppContext";
@@ -15,6 +15,10 @@ const notoSansDevanagari = Noto_Sans_Devanagari({
   weight: ["400", "500", "600", "700"],
   variable: "--font-noto-sans-devanagari",
 });
+
+export const viewport: Viewport = {
+  themeColor: "#16a34a",
+};
 
 export const metadata: Metadata = {
   title: "Kisan Diary - किसान डायरी | Farm Activity Logger",
