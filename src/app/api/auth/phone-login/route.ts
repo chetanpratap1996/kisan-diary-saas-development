@@ -256,6 +256,6 @@ export async function POST(request: NextRequest) {
       );
     }
     console.error("Phone login error:", error);
-    return NextResponse.json(errorResponse("लॉगिन विफल रहा।"), { status: 500 });
+    return NextResponse.json(errorResponse(error instanceof Error ? error.message : "लॉगिन विफल रहा।"), { status: 500 });
   }
 }

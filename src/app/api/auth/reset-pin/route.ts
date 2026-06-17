@@ -95,6 +95,6 @@ export async function POST(request: NextRequest) {
       );
     }
     console.error("Reset PIN error:", error);
-    return NextResponse.json(errorResponse("PIN रीसेट विफल रहा।"), { status: 500 });
+    return NextResponse.json(errorResponse(error instanceof Error ? error.message : "PIN रीसेट विफल रहा।"), { status: 500 });
   }
 }
