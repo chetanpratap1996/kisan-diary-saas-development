@@ -51,8 +51,6 @@ export default function RootPage() {
       if (outcome === "accepted") {
         setDeferredPrompt(null);
       }
-    } else {
-      alert("To install the app on iOS: Tap the Share button below and select 'Add to Home Screen'.\nOn Android: Tap the 3 dots menu and select 'Install app' or 'Add to Home Screen'.");
     }
   };
 
