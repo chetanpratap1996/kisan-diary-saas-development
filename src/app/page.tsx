@@ -51,6 +51,8 @@ export default function RootPage() {
       if (outcome === "accepted") {
         setDeferredPrompt(null);
       }
+    } else {
+      alert("To install the app on iOS: Tap the Share button below and select 'Add to Home Screen'.\nOn Android: Tap the 3 dots menu and select 'Install app' or 'Add to Home Screen'.");
     }
   };
 
@@ -92,7 +94,7 @@ export default function RootPage() {
                 {language === "en" ? "हिंदी" : "English"}
               </button>
             </div>
-            {mounted && deferredPrompt && (
+            {mounted && (
               <Button 
                 onClick={handleInstallApp} 
                 variant="outline"
@@ -153,7 +155,7 @@ export default function RootPage() {
               <Play className="w-4 h-4" strokeWidth={2} fill="currentColor" />
               {t(language, "viewDemo" as TranslationKey)}
             </Button>
-            {deferredPrompt && (
+            {mounted && (
               <Button 
                 size="lg" 
                 onClick={handleInstallApp} 
@@ -268,17 +270,17 @@ export default function RootPage() {
           <div>
             <h4 className="text-white font-semibold mb-4">Product</h4>
             <ul className="space-y-2">
-              <li><Link href="#" className="hover:text-green-400 transition-colors">Features</Link></li>
-              <li><Link href="#" className="hover:text-green-400 transition-colors">Pricing</Link></li>
-              <li><Link href="#" className="hover:text-green-400 transition-colors">Mobile App</Link></li>
+              <li><Link href="#features" className="hover:text-green-400 transition-colors">Features</Link></li>
+              <li><Link href="#pricing" className="hover:text-green-400 transition-colors">Pricing</Link></li>
+              <li><button onClick={handleInstallApp} className="hover:text-green-400 transition-colors">Mobile App</button></li>
             </ul>
           </div>
           <div>
             <h4 className="text-white font-semibold mb-4">Company</h4>
             <ul className="space-y-2">
-              <li><Link href="#" className="hover:text-green-400 transition-colors">About Us</Link></li>
-              <li><Link href="#" className="hover:text-green-400 transition-colors">Contact</Link></li>
-              <li><Link href="#" className="hover:text-green-400 transition-colors">Privacy Policy</Link></li>
+              <li><Link href="/app/settings" className="hover:text-green-400 transition-colors">About Us</Link></li>
+              <li><Link href="/app/settings" className="hover:text-green-400 transition-colors">Contact</Link></li>
+              <li><Link href="/app/privacy" className="hover:text-green-400 transition-colors">Privacy Policy</Link></li>
             </ul>
           </div>
         </div>

@@ -7,8 +7,6 @@ const withPWA = withPWAInit({
   register: true,
 });
 
-const nextConfig: NextConfig = {
-  turbopack: {},
-};
+const nextConfig: NextConfig = {};
 
 export default withPWA(nextConfig);
