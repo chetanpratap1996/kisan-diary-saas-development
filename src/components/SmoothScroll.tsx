@@ -1,9 +1,11 @@
 "use client";
 
-import { useEffect, ReactNode } from "react";
+import { useEffect, ReactNode, useRef } from "react";
 import Lenis from "lenis";
 
 export default function SmoothScroll({ children }: { children: ReactNode }) {
+  const rafRef = useRef<number | null>(null);
+
   useEffect(() => {
     const lenis = new Lenis({
       duration: 1.2,
@@ -17,12 +19,16 @@ export default function SmoothScroll({ children }: { children: ReactNode }) {
 
     function raf(time: number) {
       lenis.raf(time);
-      requestAnimationFrame(raf);
+      rafRef.current = requestAnimationFrame(raf);
     }
 
-    requestAnimationFrame(raf);
+    rafRef.current = requestAnimationFrame(raf);
 
     return () => {
+      // Cancel animation frame to prevent memory leak
+      if (rafRef.current !== null) {
+        cancelAnimationFrame(rafRef.current);
+      }
       lenis.destroy();
     };
   }, []);

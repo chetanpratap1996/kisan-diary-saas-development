@@ -5,6 +5,7 @@ import { db, hasDatabase } from "@/db";
 import { users, sessions } from "@/db/schema";
 import { successResponse, errorResponse } from "@/lib/utils";
 import { signJWT } from "@/lib/auth";
+import { authLimiter, getClientIP } from "@/lib/rate-limit";
 import {
   localFindUserByPhone,
   localCreateUser,
@@ -106,6 +107,22 @@ const schema = z.object({
 // POST handler — login OR auto-register
 // ─────────────────────────────────────────────
 export async function POST(request: NextRequest) {
+  // Rate limiting — 10 attempts per IP per 15 minutes
+  const ip = getClientIP(request);
+  const rateLimitResult = authLimiter.check(`phone-login:${ip}`);
+  if (!rateLimitResult.success) {
+    return NextResponse.json(
+      errorResponse(`बहुत अधिक प्रयास। ${rateLimitResult.retryAfterSeconds} सेकंड बाद दोबारा कोशिश करें।`),
+      {
+        status: 429,
+        headers: {
+          "Retry-After": String(rateLimitResult.retryAfterSeconds),
+          "X-RateLimit-Remaining": "0",
+        },
+      }
+    );
+  }
+
   try {
     const body = await request.json();
     const { phone, pin, name } = schema.parse(body);
@@ -255,7 +272,7 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
-    console.error("Phone login error:", error);
-    return NextResponse.json(errorResponse(error instanceof Error ? error.message : "लॉगिन विफल रहा।"), { status: 500 });
+    console.error("[phone-login] Error:", error);
+    return NextResponse.json(errorResponse("लॉगिन विफल रहा। कृपया दोबारा कोशिश करें।"), { status: 500 });
   }
 }

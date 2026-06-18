@@ -1,0 +1,133 @@
+const fs = require('fs');
+
+const trans = [
+  { key: 'landTypeOwned', hi: 'अपनी ज़मीन (Owned)', en: 'Owned Land', mr: 'स्वतःची जमीन (Owned)', pa: 'ਆਪਣੀ ਜ਼ਮੀਨ (Owned)' },
+  { key: 'landTypeLeased', hi: 'किराये की ज़मीन (Leased)', en: 'Leased Land', mr: 'भाड्याची जमीन (Leased)', pa: 'ਕਿਰਾਏ ਦੀ ਜ਼ਮੀਨ (Leased)' },
+  { key: 'landTypeAncestral', hi: 'पुश्तैनी ज़मीन (Ancestral)', en: 'Ancestral Land', mr: 'वडिलोपार्जित जमीन (Ancestral)', pa: 'ਪੁਰਖਿਆਂ ਦੀ ਜ਼ਮੀਨ (Ancestral)' },
+  { key: 'irrigationBorewell', hi: 'बोरवेल (Borewell)', en: 'Borewell', mr: 'बोरवेल (Borewell)', pa: 'ਬੋਰਵੈੱਲ (Borewell)' },
+  { key: 'irrigationCanal', hi: 'नहर (Canal)', en: 'Canal', mr: 'कालवा (Canal)', pa: 'ਨਹਿਰ (Canal)' },
+  { key: 'irrigationRainFed', hi: 'बारिश पर निर्भर (Rain-fed)', en: 'Rain-fed', mr: 'पावसावर अवलंबून (Rain-fed)', pa: 'ਮੀਂਹ ਤੇ ਨਿਰਭਰ (Rain-fed)' },
+  { key: 'irrigationDrip', hi: 'ड्रिप सिंचाई (Drip Irrigation)', en: 'Drip Irrigation', mr: 'ठिबक सिंचन (Drip)', pa: 'ਡ੍ਰਿੱਪ ਸਿੰਚਾਈ (Drip)' },
+  { key: 'irrigationPond', hi: 'तालाब (Pond/Tank)', en: 'Pond/Tank', mr: 'तलाव (Pond/Tank)', pa: 'ਤਾਲਾਬ (Pond/Tank)' },
+  { key: 'soilBlack', hi: 'काली मिट्टी (Black Soil)', en: 'Black Soil', mr: 'काळी माती (Black Soil)', pa: 'ਕਾਲੀ ਮਿੱਟੀ (Black Soil)' },
+  { key: 'soilRed', hi: 'लाल मिट्टी (Red Soil)', en: 'Red Soil', mr: 'लाल माती (Red Soil)', pa: 'ਲਾਲ ਮਿੱਟੀ (Red Soil)' },
+  { key: 'soilSandy', hi: 'रेतीली मिट्टी (Sandy)', en: 'Sandy', mr: 'वाळूची माती (Sandy)', pa: 'ਰੇਤਲੀ ਮਿੱਟੀ (Sandy)' },
+  { key: 'soilClay', hi: 'चिकनी मिट्टी (Clay)', en: 'Clay', mr: 'चिकणमाती (Clay)', pa: 'ਚੀਕਣੀ ਮਿੱਟੀ (Clay)' },
+  { key: 'soilAlluvial', hi: 'दोमट मिट्टी (Alluvial/Loamy)', en: 'Alluvial/Loamy', mr: 'गाळाची माती (Alluvial/Loamy)', pa: 'ਦੋਮਟ ਮਿੱਟੀ (Alluvial/Loamy)' },
+  { key: 'unitAcre', hi: 'एकड़ (Acre)', en: 'Acre', mr: 'एकर (Acre)', pa: 'ਏਕੜ (Acre)' },
+  { key: 'unitBigha', hi: 'बीघा (Bigha)', en: 'Bigha', mr: 'बिघा (Bigha)', pa: 'ਬੀਘਾ (Bigha)' },
+  { key: 'unitHectare', hi: 'हेक्टेयर (Hectare)', en: 'Hectare', mr: 'हेक्टर (Hectare)', pa: 'ਹੈਕਟੇਅਰ (Hectare)' },
+  { key: 'saveFailed', hi: 'सहेजने में विफल', en: 'Failed to save', mr: 'सेव्ह करण्यात अयशस्वी', pa: 'ਸੇਵ ਕਰਨ ਵਿੱਚ ਅਸਫਲ' },
+  { key: 'labelFullName', hi: 'पूरा नाम', en: 'Full Name', mr: 'पूर्ण नाव', pa: 'ਪੂਰਾ ਨਾਮ' },
+  { key: 'phFullName', hi: 'अपना नाम डालें', en: 'Enter your name', mr: 'तुमचे नाव टाका', pa: 'ਆਪਣਾ ਨਾਮ ਦਰਜ ਕਰੋ' },
+  { key: 'labelMobile', hi: 'मोबाइल नंबर', en: 'Mobile Number', mr: 'मोबाईल क्रमांक', pa: 'ਮੋਬਾਈਲ ਨੰਬਰ' },
+  { key: 'labelPincode', hi: 'पिन कोड (PIN Code)', en: 'PIN Code', mr: 'पिन कोड (PIN Code)', pa: 'ਪਿਨ ਕੋਡ (PIN Code)' },
+  { key: 'phPincode', hi: '6 अंकों का पिन कोड', en: '6 digit PIN code', mr: '6 अंकी पिन कोड', pa: '6 ਅੰਕਾਂ ਦਾ ਪਿਨ ਕੋਡ' },
+  { key: 'labelDistrict', hi: 'जिला (District)', en: 'District', mr: 'जिल्हा (District)', pa: 'ਜ਼ਿਲ੍ਹਾ (District)' },
+  { key: 'phDistrict', hi: 'अपना जिला लिखें', en: 'Enter your district', mr: 'तुमचा जिल्हा लिहा', pa: 'ਆਪਣਾ ਜ਼ਿਲ੍ਹਾ ਲਿਖੋ' },
+  { key: 'labelVillage', hi: 'गाँव/कस्बा (Village)', en: 'Village/Town', mr: 'गाव/शहर (Village)', pa: 'ਪਿੰਡ/ਕਸਬਾ (Village)' },
+  { key: 'phVillage', hi: 'गाँव का नाम लिखें', en: 'Enter village name', mr: 'गावाचे नाव लिहा', pa: 'ਪਿੰਡ ਦਾ ਨਾਮ ਲਿਖੋ' },
+  { key: 'labelState', hi: 'राज्य (State)', en: 'State', mr: 'राज्य (State)', pa: 'ਰਾਜ (State)' },
+  { key: 'phState', hi: 'राज्य चुनें', en: 'Select state', mr: 'राज्य निवडा', pa: 'ਰਾਜ ਚੁਣੋ' },
+  { key: 'labelOptional', hi: 'वैकल्पिक', en: 'Optional', mr: 'पर्यायी', pa: 'ਵਿਕਲਪਿਕ' },
+  { key: 'labelPmKisanId', hi: 'PM Kisan रजिस्ट्रेशन ID', en: 'PM Kisan Registration ID', mr: 'PM किसान नोंदणी ID', pa: 'PM ਕਿਸਾਨ ਰਜਿਸਟ੍ਰੇਸ਼ਨ ID' },
+  { key: 'phPmKisanId', hi: 'ID नंबर डालें (अगर है)', en: 'Enter ID (if any)', mr: 'आयडी नंबर टाका (असल्यास)', pa: 'ID ਨੰਬਰ ਦਰਜ ਕਰੋ (ਜੇਕਰ ਹੈ)' },
+  { key: 'pmKisanHelpText', hi: 'PM Kisan ID होने पर सरकारी योजनाओं का मिलान बेहतर होगा।', en: 'Having PM Kisan ID helps better match with govt schemes.', mr: 'PM किसान आयडी असल्यास सरकारी योजनांशी जुळणी चांगली होईल.', pa: 'PM ਕਿਸਾਨ ID ਹੋਣ ਨਾਲ ਸਰਕਾਰੀ ਯੋਜਨਾਵਾਂ ਦਾ ਮੇਲ ਬਿਹਤਰ ਹੋਵੇਗਾ।' },
+  { key: 'errFarmInfoReq', hi: 'खेत का नाम, आकार और स्थान जरूरी है।', en: 'Farm name, size, and location are required.', mr: 'शेतचे नाव, आकार आणि स्थान आवश्यक आहे.', pa: 'ਖੇਤ ਦਾ ਨਾਮ, ਆਕਾਰ ਅਤੇ ਸਥਾਨ ਜ਼ਰੂਰੀ ਹੈ।' },
+  { key: 'errFarmAddFail', hi: 'खेत जोड़ने में गड़बड़ी हुई। फिर कोशिश करें।', en: 'Failed to add farm. Try again.', mr: 'शेत जोडण्यात अडचण आली. पुन्हा प्रयत्न करा.', pa: 'ਖੇਤ ਜੋੜਨ ਵਿੱਚ ਸਮੱਸਿਆ ਆਈ। ਫਿਰ ਕੋਸ਼ਿਸ਼ ਕਰੋ।' },
+  { key: 'errFarmUpdateFail', hi: 'खेत अपडेट करने में विफल।', en: 'Failed to update farm.', mr: 'शेत अपडेट करण्यात अयशस्वी.', pa: 'ਖੇਤ ਅੱਪਡੇਟ ਕਰਨ ਵਿੱਚ ਅਸਫਲ।' },
+  { key: 'errSeasonInfoReq', hi: 'फसल का नाम और तारीख जरूरी है।', en: 'Crop name and date are required.', mr: 'पिकाचे नाव आणि तारीख आवश्यक आहे.', pa: 'ਫ਼ਸਲ ਦਾ ਨਾਮ ਅਤੇ ਮਿਤੀ ਜ਼ਰੂਰੀ ਹੈ।' },
+  { key: 'errSeasonAddFail', hi: 'फसल शुरू करने में विफल।', en: 'Failed to start season.', mr: 'पीक सुरू करण्यात अयशस्वी.', pa: 'ਫ਼ਸਲ ਸ਼ੁਰੂ ਕਰਨ ਵਿੱਚ ਅਸਫਲ।' },
+  { key: 'myFarmsTitle', hi: 'मेरे खेत', en: 'My Farms', mr: 'माझी शेती', pa: 'ਮੇਰੇ ਖੇਤ' },
+  { key: 'btnNewFarm', hi: 'नया खेत', en: 'New Farm', mr: 'नवीन शेत', pa: 'ਨਵਾਂ ਖੇਤ' },
+  { key: 'noFarmsFound', hi: 'कोई खेत नहीं', en: 'No Farms', mr: 'कोणतेही शेत नाही', pa: 'ਕੋਈ ਖੇਤ ਨਹੀਂ' },
+  { key: 'noFarmsDesc', hi: 'पहला खेत जोड़ें और खेती का हिसाब शुरू करें।', en: 'Add your first farm and start tracking.', mr: 'पहिले शेत जोडा आणि शेतीचा हिशेब सुरू करा.', pa: 'ਪਹਿਲਾ ਖੇਤ ਜੋੜੋ ਅਤੇ ਖੇਤੀ ਦਾ ਹਿਸਾਬ ਸ਼ੁਰੂ ਕਰੋ।' },
+  { key: 'btnAddFirstFarm', hi: 'पहला खेत जोड़ें', en: 'Add First Farm', mr: 'पहिले शेत जोडा', pa: 'ਪਹਿਲਾ ਖੇਤ ਜੋੜੋ' },
+  { key: 'badgeSelected', hi: 'चयनित', en: 'Selected', mr: 'निवडलेले', pa: 'ਚੁਣਿਆ ਗਿਆ' },
+  { key: 'labelActiveSeason', hi: 'चालू फसल', en: 'Active Season', mr: 'सध्याचे पीक', pa: 'ਚਾਲੂ ਫ਼ਸਲ' },
+  { key: 'labelFromDate', hi: 'से', en: 'Since', mr: 'पासून', pa: 'ਤੋਂ' },
+  { key: 'btnCompleteSeason', hi: 'फसल पूरी करें', en: 'Complete Season', mr: 'पीक पूर्ण करा', pa: 'ਫ਼ਸਲ ਪੂਰੀ ਕਰੋ' },
+  { key: 'noActiveSeason', hi: 'कोई फसल नहीं', en: 'No Active Season', mr: 'कोणतेही पीक नाही', pa: 'ਕੋਈ ਫ਼ਸਲ ਨਹੀਂ' },
+  { key: 'btnStartSeason', hi: 'फसल शुरू करें', en: 'Start Season', mr: 'पीक सुरू करा', pa: 'ਫ਼ਸਲ ਸ਼ੁਰੂ ਕਰੋ' },
+  { key: 'modalTitleAddFarm', hi: 'नया खेत जोड़ें', en: 'Add New Farm', mr: 'नवीन शेत जोडा', pa: 'ਨਵਾਂ ਖੇਤ ਜੋੜੋ' },
+  { key: 'modalDescAddFarm', hi: 'खेत की जानकारी भरें', en: 'Fill farm details', mr: 'शेताची माहिती भरा', pa: 'ਖੇਤ ਦੀ ਜਾਣਕਾਰੀ ਭਰੋ' },
+  { key: 'labelFarmNameStar', hi: 'खेत का नाम *', en: 'Farm Name *', mr: 'शेताचे नाव *', pa: 'ਖੇਤ ਦਾ ਨਾਮ *' },
+  { key: 'btnSaveFarm', hi: 'सुरक्षित करें', en: 'Save', mr: 'सेव्ह करा', pa: 'ਸੁਰੱਖਿਅਤ ਕਰੋ' },
+  { key: 'modalTitleEditFarm', hi: 'खेत संपादित करें', en: 'Edit Farm', mr: 'शेत संपादित करा', pa: 'ਖੇਤ ਸੰਪਾਦਿਤ ਕਰੋ' },
+  { key: 'btnUpdateFarm', hi: 'अपडेट करें', en: 'Update', mr: 'अपडेट करा', pa: 'ਅੱਪਡੇਟ ਕਰੋ' },
+  { key: 'modalTitleDeleteFarm', hi: 'खेत हटाएं?', en: 'Delete Farm?', mr: 'शेत हटवा?', pa: 'ਖੇਤ ਹਟਾਓ?' },
+  { key: 'btnCancel', hi: 'रद्द करें', en: 'Cancel', mr: 'रद्द करा', pa: 'ਰੱਦ ਕਰੋ' },
+  { key: 'modalTitleCompleteSeason', hi: 'फसल पूरी करें?', en: 'Complete Season?', mr: 'पीक पूर्ण करा?', pa: 'ਫ਼ਸਲ ਪੂਰੀ ਕਰੋ?' },
+  { key: 'msgCompleteSeasonDesc', hi: 'की फसल को पूर्ण मार्क करेंगे। बाद', en: 'will be marked as complete. Then you can', mr: 'च्या पिकाला पूर्ण म्हणून मार्क केले जाईल. नंतर तुम्ही', pa: 'ਦੀ ਫ਼ਸਲ ਨੂੰ ਪੂਰਨ ਮੰਨਿਆ ਜਾਵੇਗਾ। ਫਿਰ ਤੁਸੀਂ' },
+  { key: 'btnViewDetails', hi: 'विस्तार देखें', en: 'View Details', mr: 'सविस्तर पहा', pa: 'ਵੇਰਵੇ ਦੇਖੋ' },
+  { key: 'notifMandiTitle', hi: 'मंडी भाव अलर्ट', en: 'Mandi Price Alerts', mr: 'मंडी भाव अलर्ट', pa: 'ਮੰਡੀ ਭਾਅ ਅਲਰਟ' },
+  { key: 'notifMandiDesc', hi: 'फसल की कीमत में बड़ा बदलाव होने पर सूचना', en: 'Notify when there is a major price change', mr: 'पिकाच्या किमतीत मोठा बदल झाल्यास सूचना', pa: 'ਫ਼ਸਲ ਦੀ ਕੀਮਤ ਵਿੱਚ ਵੱਡਾ ਬਦਲਾਅ ਆਉਣ ਤੇ ਸੂਚਨਾ' },
+  { key: 'notifWeatherTitle', hi: 'मौसम चेतावनी', en: 'Weather Alerts', mr: 'हवामान सूचना', pa: 'ਮੌਸਮ ਚਿਤਾਵਨੀ' },
+  { key: 'notifWeatherDesc', hi: 'बारिश या गर्मी की चेतावनी मिलने पर अलर्ट', en: 'Alert on rain or heat warnings', mr: 'पाऊस किंवा उष्णतेचा इशारा मिळाल्यास अलर्ट', pa: 'ਮੀਂਹ ਜਾਂ ਗਰਮੀ ਦੀ ਚਿਤਾਵਨੀ ਮਿਲਣ ਤੇ ਅਲਰਟ' },
+  { key: 'notifDebtTitle', hi: 'उधार याद दिलाना', en: 'Debt Reminders', mr: 'कर्ज स्मरणपत्र', pa: 'ਉਧਾਰ ਯਾਦ ਕਰਵਾਉਣਾ' },
+  { key: 'notifDebtDesc', hi: 'उधार की तारीख से 3 दिन पहले रिमाइंडर', en: 'Reminder 3 days before due date', mr: 'कर्जाच्या तारखेच्या 3 दिवस आधी स्मरणपत्र', pa: 'ਉਧਾਰ ਦੀ ਤਰੀਕ ਤੋਂ 3 ਦਿਨ ਪਹਿਲਾਂ ਰਿਮਾਈਂਡਰ' },
+  { key: 'notifDailyTitle', hi: 'दैनिक काम रिमाइंडर', en: 'Daily Task Reminder', mr: 'दैनंदिन काम स्मरणपत्र', pa: 'ਰੋਜ਼ਾਨਾ ਕੰਮ ਰਿਮਾਈਂਡਰ' },
+  { key: 'notifDailyDesc', hi: 'शाम 6 बजे: \'आज का काम लिखा?\' रिमाइंडर', en: '6 PM: \'Logged today\'s task?\' reminder', mr: 'संध्याकाळी 6 वाजता: \'आजचे काम लिहिले?\' स्मरणपत्र', pa: 'ਸ਼ਾਮ 6 ਵਜੇ: \'ਅੱਜ ਦਾ ਕੰਮ ਲਿਖਿਆ?\' ਰਿਮਾਈਂਡਰ' },
+  { key: 'notifStockTitle', hi: 'भंडार कम होने का अलर्ट', en: 'Low Stock Alert', mr: 'स्टॉक कमी असल्याचा अलर्ट', pa: 'ਸਟਾਕ ਘੱਟ ਹੋਣ ਦਾ ਅਲਰਟ' },
+  { key: 'notifStockDesc', hi: 'बीज, खाद या दवाई का स्टॉक कम होने पर', en: 'When seeds, fertilizers, or pesticides are low', mr: 'बियाणे, खते किंवा औषधांचा स्टॉक कमी असल्यास', pa: 'ਬੀਜ, ਖਾਦ ਜਾਂ ਦਵਾਈ ਦਾ ਸਟਾਕ ਘੱਟ ਹੋਣ ਤੇ' },
+  { key: 'unitPreferenceDesc', hi: 'सभी खेतों का आकार चुनी हुई इकाई में दिखेगा।', en: 'All farm sizes will be shown in the selected unit.', mr: 'सर्व शेतांचा आकार निवडलेल्या एककात दिसेल.', pa: 'ਸਾਰੇ ਖੇਤਾਂ ਦਾ ਆਕਾਰ ਚੁਣੀ ਹੋਈ ਇਕਾਈ ਵਿੱਚ ਦਿਖੇਗਾ।' },
+  { key: 'errPinMismatch', hi: 'नया PIN दोनों में एक जैसा होना चाहिए।', en: 'New PIN must match in both fields.', mr: 'नवीन पिन दोन्ही फील्डमध्ये समान असावा.', pa: 'ਨਵਾਂ PIN ਦੋਵਾਂ ਖੇਤਰਾਂ ਵਿੱਚ ਇੱਕੋ ਜਿਹਾ ਹੋਣਾ ਚਾਹੀਦਾ ਹੈ।' },
+  { key: 'errPinLength', hi: 'PIN कम से कम 4 अंकों का होना चाहिए।', en: 'PIN must be at least 4 digits.', mr: 'पिन किमान 4 अंकी असावा.', pa: 'PIN ਘੱਟੋ ਘੱਟ 4 ਅੰਕਾਂ ਦਾ ਹੋਣਾ ਚਾਹੀਦਾ ਹੈ।' },
+  { key: 'errPinChangeFail', hi: 'PIN बदलने में विफल।', en: 'Failed to change PIN.', mr: 'पिन बदलण्यात अयशस्वी.', pa: 'PIN ਬਦਲਣ ਵਿੱਚ ਅਸਫਲ।' },
+  { key: 'encryptedSecure', hi: 'एन्क्रिप्टेड और सुरक्षित', en: 'Encrypted & Secure', mr: 'एनक्रिप्टेड आणि सुरक्षित', pa: 'ਐਨਕ੍ਰਿਪਟਡ ਅਤੇ ਸੁਰੱਖਿਅਤ' },
+  { key: 'btnChangePin', hi: 'PIN बदलें', en: 'Change PIN', mr: 'पिन बदला', pa: 'PIN ਬਦਲੋ' },
+  { key: 'btnUpdatePin', hi: 'PIN अपडेट करें', en: 'Update PIN', mr: 'पिन अपडेट करा', pa: 'PIN ਅੱਪਡੇਟ ਕਰੋ' },
+  { key: 'helpSupport', hi: 'सहायता और सपोर्ट', en: 'Help & Support', mr: 'मदत आणि सपोर्ट', pa: 'ਮਦਦ ਅਤੇ ਸਪੋਰਟ' },
+  { key: 'helpWhatsApp', hi: 'WhatsApp पर मदद लें', en: 'Get help on WhatsApp', mr: 'WhatsApp वर मदत मिळवा', pa: 'WhatsApp ਤੇ ਮਦਦ ਲਵੋ' },
+  { key: 'privacyPolicy', hi: 'प्राइवेसी पॉलिसी', en: 'Privacy Policy', mr: 'गोपनीयता धोरण', pa: 'ਪ੍ਰਾਈਵੇਸੀ ਪਾਲਿਸੀ' },
+  { key: 'privacyDesc', hi: 'आपके डेटा की सुरक्षा के बारे में', en: 'About your data security', mr: 'तुमच्या डेटाच्या सुरक्षेबद्दल', pa: 'ਤੁਹਾਡੇ ਡੇਟਾ ਦੀ ਸੁਰੱਖਿਆ ਬਾਰੇ' },
+  { key: 'termsConditions', hi: 'उपयोग की शर्तें', en: 'Terms of Use', mr: 'वापराच्या अटी', pa: 'ਵਰਤੋਂ ਦੀਆਂ ਸ਼ਰਤਾਂ' },
+  { key: 'aboutKisanScore', hi: 'किसान स्कोर के बारे में', en: 'About Kisan Score', mr: 'किसान स्कोअर बद्दल', pa: 'ਕਿਸਾਨ ਸਕੋਰ ਬਾਰੇ' },
+  { key: 'howScoreWorks', hi: 'स्कोर कैसे काम करता है?', en: 'How does the score work?', mr: 'स्कोअर कसे काम करते?', pa: 'ਸਕੋਰ ਕਿਵੇਂ ਕੰਮ ਕਰਦਾ ਹੈ?' },
+  { key: 'loginRequired', hi: 'लॉगिन आवश्यक है', en: 'Login Required', mr: 'लॉगिन आवश्यक आहे', pa: 'ਲੌਗਇਨ ਜ਼ਰੂਰੀ ਹੈ' },
+  { key: 'btnLogout', hi: 'लॉगआउट (Logout)', en: 'Logout', mr: 'लॉगआउट (Logout)', pa: 'ਲੌਗਆਉਟ (Logout)' },
+];
+
+let genTrans = fs.readFileSync('g:/kisan-diary-saas-development/gen_trans.js', 'utf8');
+let added = '';
+trans.forEach(t => {
+  if (!genTrans.includes(t.key + ':')) {
+    added += `  ${t.key}: { hi: "${t.hi}", en: "${t.en}", mr: "${t.mr}", pa: "${t.pa}" },\n`;
+  }
+});
+if (added) {
+  genTrans = genTrans.replace('  // End quick actions', '  // Settings More\n' + added + '\n  // End quick actions');
+  fs.writeFileSync('g:/kisan-diary-saas-development/gen_trans.js', genTrans);
+}
+
+let settings = fs.readFileSync('g:/kisan-diary-saas-development/src/app/app/settings/page.tsx', 'utf8');
+
+// Replace exact strings
+trans.forEach(t => {
+  // if exact match in code
+  // Some are in arrays or objects, some are inside JSX >...< or attributes="..."
+  let hi = t.hi;
+  
+  // For JSX >hi<
+  settings = settings.split('>' + hi + '<').join('>{t(lang, "' + t.key + '")}<');
+  // For JSX >hi
+  settings = settings.split('>' + hi + '\n').join('>{t(lang, "' + t.key + '")}\n');
+  // For placeholders
+  settings = settings.split('placeholder="' + hi + '"').join('placeholder={t(lang, "' + t.key + '")}');
+  // For labels
+  settings = settings.split('label="' + hi + '"').join('label={t(lang, "' + t.key + '")}');
+  // For pure strings like "hi"
+  settings = settings.split('"' + hi + '"').join('t(lang, "' + t.key + '")');
+});
+
+// A few specific replacements for the ones that don't match cleanly:
+settings = settings.replace('<p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">मोबाइल नंबर</p>', '<p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{t(lang, "labelMobile")}</p>');
+settings = settings.replace('PM Kisan ID होने पर सरकारी योजनाओं का मिलान बेहतर होगा।', '{t(lang, "pmKisanHelpText")}');
+settings = settings.replace('खेत का नाम *', '{t(lang, "labelFarmNameStar")}');
+settings = settings.replace('खेत की जानकारी भरें', '{t(lang, "modalDescAddFarm")}');
+settings = settings.replace('सभी खेतों का आकार चुनी हुई इकाई में दिखेगा।', '{t(lang, "unitPreferenceDesc")}');
+settings = settings.replace('की फसल को पूर्ण मार्क करेंगे। बाद', '{t(lang, "msgCompleteSeasonDesc")}');
+
+// ensure `import { t }` handles all
+fs.writeFileSync('g:/kisan-diary-saas-development/src/app/app/settings/page.tsx', settings);
+console.log('Settings string extracted');

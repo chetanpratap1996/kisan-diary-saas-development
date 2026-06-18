@@ -45,6 +45,7 @@ interface AppContextType {
   activeFarm: Farm | null;
   activeSeason: Season | null;
   isLoading: boolean;
+  isOnline: boolean;
   login: (token: string, user: User) => void;
   logout: () => void;
   updateUser: (patch: Partial<User>) => void;
@@ -52,10 +53,28 @@ interface AppContextType {
   setActiveFarm: (farm: Farm | null) => void;
   setActiveSeason: (season: Season | null) => void;
   refreshFarms: () => Promise<void>;
-  apiCall: <T>(url: string, options?: RequestInit) => Promise<T>;
+  apiCall: <T>(url: string, options?: RequestInit, retries?: number) => Promise<T>;
 }
 
 const AppContext = createContext<AppContextType | null>(null);
+
+// ─── API call with timeout and retry ─────────────────────────────────────────
+const TIMEOUT_MS = 15_000; // 15 seconds
+const RETRY_DELAYS = [500, 1500, 3000]; // ms
+
+async function fetchWithTimeout(url: string, options: RequestInit, timeoutMs: number): Promise<Response> {
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const response = await fetch(url, { ...options, signal: controller.signal });
+    return response;
+  } finally {
+    clearTimeout(id);
+  }
+}
+
+// ─── Duplicate request prevention ────────────────────────────────────────────
+const pendingRequests = new Map<string, Promise<unknown>>();
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -65,6 +84,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [activeFarm, setActiveFarm] = useState<Farm | null>(null);
   const [activeSeason, setActiveSeason] = useState<Season | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isOnline, setIsOnline] = useState(true);
 
   // Load from localStorage on mount
   useEffect(() => {
@@ -73,14 +93,37 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     const savedLang = localStorage.getItem("kisan_lang") as Language;
 
     if (savedToken && savedUser) {
-      setToken(savedToken);
-      setUser(JSON.parse(savedUser));
+      try {
+        setToken(savedToken);
+        setUser(JSON.parse(savedUser));
+      } catch {
+        // Corrupted data — clear it
+        localStorage.removeItem("kisan_token");
+        localStorage.removeItem("kisan_user");
+      }
     }
     if (savedLang) setLanguageState(savedLang);
     setIsLoading(false);
   }, []);
 
-  const apiCall = useCallback(async <T,>(url: string, options?: RequestInit): Promise<T> => {
+  // Track online/offline state
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+    setIsOnline(navigator.onLine);
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
+  }, []);
+
+  const apiCall = useCallback(async <T,>(
+    url: string,
+    options?: RequestInit,
+    retries = 2
+  ): Promise<T> => {
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
       ...(options?.headers as Record<string, string>),
@@ -91,14 +134,60 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       headers["Authorization"] = `Bearer ${currentToken}`;
     }
 
-    const response = await fetch(url, { ...options, headers });
-    const data = await response.json();
+    const requestOptions = { ...options, headers };
 
-    if (!response.ok) {
-      throw new Error(data.message || "Request failed");
+    // Deduplicate identical GET requests
+    const isGet = !options?.method || options.method === "GET";
+    const dedupeKey = isGet ? url : null;
+
+    if (dedupeKey && pendingRequests.has(dedupeKey)) {
+      return pendingRequests.get(dedupeKey) as Promise<T>;
     }
 
-    return data as T;
+    const execute = async (): Promise<T> => {
+      let lastError: Error | null = null;
+
+      for (let attempt = 0; attempt <= retries; attempt++) {
+        try {
+          const response = await fetchWithTimeout(url, requestOptions, TIMEOUT_MS);
+          const data = await response.json();
+
+          if (!response.ok) {
+            throw new Error(data.message || `Request failed with status ${response.status}`);
+          }
+
+          return data as T;
+        } catch (err) {
+          lastError = err instanceof Error ? err : new Error(String(err));
+
+          // Don't retry on client errors (4xx) or aborts
+          if (err instanceof Error && err.name === "AbortError") {
+            throw new Error("अनुरोध का समय समाप्त हो गया। कृपया दोबारा कोशिश करें।");
+          }
+
+          const statusMatch = lastError.message.match(/status (\d+)/);
+          if (statusMatch) {
+            const status = parseInt(statusMatch[1]);
+            if (status >= 400 && status < 500) throw lastError;
+          }
+
+          // Wait before retrying
+          if (attempt < retries) {
+            await new Promise((res) => setTimeout(res, RETRY_DELAYS[attempt] ?? 1000));
+          }
+        }
+      }
+
+      throw lastError ?? new Error("अनुरोध विफल रहा।");
+    };
+
+    const promise = execute().finally(() => {
+      if (dedupeKey) pendingRequests.delete(dedupeKey);
+    });
+
+    if (dedupeKey) pendingRequests.set(dedupeKey, promise);
+
+    return promise;
   }, []);
 
   const refreshFarms = useCallback(async () => {
@@ -115,7 +204,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         }
       }
     } catch (error) {
-      console.error("Failed to refresh farms:", error);
+      // Silently fail — farms will show empty state
+      console.error("[AppContext] Failed to refresh farms:", error);
     }
   }, [token, apiCall, activeFarm]);
 
@@ -125,25 +215,25 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   }, [token, refreshFarms]);
 
-  const login = (newToken: string, newUser: User) => {
+  const login = useCallback((newToken: string, newUser: User) => {
     setToken(newToken);
     setUser(newUser);
     setLanguageState(newUser.language as Language);
     localStorage.setItem("kisan_token", newToken);
     localStorage.setItem("kisan_user", JSON.stringify(newUser));
     localStorage.setItem("kisan_lang", newUser.language);
-  };
+  }, []);
 
-  const updateUser = (patch: Partial<User>) => {
+  const updateUser = useCallback((patch: Partial<User>) => {
     setUser((prev) => {
       if (!prev) return null;
       const updated = { ...prev, ...patch };
       localStorage.setItem("kisan_user", JSON.stringify(updated));
       return updated;
     });
-  };
+  }, []);
 
-  const logout = () => {
+  const logout = useCallback(() => {
     setToken(null);
     setUser(null);
     setFarms([]);
@@ -151,12 +241,15 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setActiveSeason(null);
     localStorage.removeItem("kisan_token");
     localStorage.removeItem("kisan_user");
-  };
+    pendingRequests.clear();
+  }, []);
 
-  const setLanguage = (lang: Language) => {
+  const setLanguage = useCallback((lang: Language) => {
     setLanguageState(lang);
     localStorage.setItem("kisan_lang", lang);
-  };
+    // Also update the HTML lang attribute immediately
+    document.documentElement.setAttribute("lang", lang);
+  }, []);
 
   return (
     <AppContext.Provider
@@ -168,6 +261,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         activeFarm,
         activeSeason,
         isLoading,
+        isOnline,
         login,
         logout,
         updateUser,

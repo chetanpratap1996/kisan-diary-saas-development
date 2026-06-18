@@ -9,21 +9,35 @@ import {
   localFindUserByUsername,
 } from "@/lib/local-auth-store";
 
-const JWT_SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET || "kisan-diary-secret-key-2024-secure"
-);
+// Require JWT_SECRET in production — never use a fallback in prod
+function getJwtSecret(): Uint8Array {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    if (process.env.NODE_ENV === "production") {
+      throw new Error(
+        "JWT_SECRET environment variable is not set. This is required in production."
+      );
+    }
+    // Dev-only fallback (will show warning)
+    console.warn(
+      "[Auth] WARNING: JWT_SECRET is not set. Using insecure dev fallback. Set this in .env!"
+    );
+    return new TextEncoder().encode("kisan-diary-dev-secret-CHANGE-IN-PRODUCTION");
+  }
+  return new TextEncoder().encode(secret);
+}
 
 export async function signJWT(payload: Record<string, unknown>): Promise<string> {
   return new SignJWT(payload)
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime("30d")
-    .sign(JWT_SECRET);
+    .sign(getJwtSecret());
 }
 
 export async function verifyJWT(token: string): Promise<Record<string, unknown> | null> {
   try {
-    const { payload } = await jwtVerify(token, JWT_SECRET);
+    const { payload } = await jwtVerify(token, getJwtSecret());
     return payload as Record<string, unknown>;
   } catch {
     return null;
